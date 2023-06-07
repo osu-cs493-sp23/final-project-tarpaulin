@@ -6,20 +6,21 @@ const Submission = require('./submission')
 const User = require('./user')
 
 const Assignment = sequelize.define('assignment', {
-  courseId: { type: DataTypes.INTEGER, allowNull: false },
   title: { type: DataTypes.STRING, allowNull: false },
   dueDate: { type: DataTypes.DATE, allowNull: true}
 })
 
 
-Assignment.hasMany(User, {
-    onDelete: "CASCADE",
-    onUpdate: "CASCADE",
-    foreignKey: {allowNull: false}
+Assignment.hasMany(Submission, {
+  onDelete: 'CASCADE',
+  onUpdate: 'CASCADE',
+  foreignKey: 'submissionId'
 })
+Submission.belongsTo(Assignment)
 
 
 exports.Assignment = Assignment
+
 /*
  * Export an array containing the names of fields the client is allowed to set
  * on photos.

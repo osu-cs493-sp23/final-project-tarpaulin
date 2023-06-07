@@ -15,6 +15,28 @@ const User = sequelize.define('user', {
 		}
 	}
 })
+
+User.hasMany(Assignment, {
+	onDelete: 'CASCADE',
+	onUpdate: 'CASCADE',
+	foreignKey: 'userId'
+})
+Assignment.belongsTo(User)
+
+User.hasMany(Course, {
+	onDelete: 'CASCADE',
+	onUpdate: 'CASCADE',
+	foreignKey: 'userId'
+})
+Course.belongsTo(User)
+
+User.hasMany(Submission, {
+	onDelete: 'CASCADE',
+	onUpdate: 'CASCADE',
+	foreignKey: 'userId'
+})
+Submission.belongsTo(User)
+
 exports.User= User
 
 exports.UserClientFields = [
