@@ -1,5 +1,11 @@
 const { Router } = require('express')
-const router = Router();
+const router = Router()
+
+// const { ValidationError } = require('sequelize')
+// const { Assignment } = require('../models/assignment')
+// const { Course } = require('../models/course')
+// const { Submission } = require('../models/submission')
+// const { User } = require('../models/user')
 
 router.use('/assignments', require('./assignments'))
 router.use('/courses', require('./courses'))
