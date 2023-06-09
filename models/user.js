@@ -6,13 +6,14 @@ const { Assignment } = require('./assignment')
 const { Course } = require('./course')
 const { Submission } = require('./submission')
 
+
 const User = sequelize.define('user', {
 	role: {
 		type: DataTypes.STRING,
 		defaultValue: 'student',
 		allowNull: true,
 		validate: {
-			isIn: ['instructor', 'admin', 'student']
+			isIn: [['instructor', 'admin', 'student']]
 		}
 	}
 })
@@ -23,6 +24,8 @@ exports.UserClientFields = [
 ]
 
 exports.User = User
+
+
 
 // MONGO VERSIONS OF FUNCTIONS
 // exports.insertNewUser = async function (user) {

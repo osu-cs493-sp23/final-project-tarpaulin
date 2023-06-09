@@ -1,14 +1,14 @@
 const { Router } = require('express')
 const { ValidationError } = require('sequelize')
 
-const { User } = require('../models/user')
+const { User, UserClientFields } = require('../models/user')
 const router = Router()
 
 
 // Post a new user
 router.post('/', async function (req, res, next) {
     try {
-      const user = await User.create(req.body, AssignmentClientFields)
+      const user = await User.create(req.body, UserClientFields)
       res.status(201).send({ id: user.id })
     } catch (e) {
       if (e instanceof ValidationError) {
