@@ -1,0 +1,38 @@
+[
+    {
+        "courseNumber": "2243",
+        "subject": "math",
+        "title": "algebra",
+        "term": "spring"
+    },
+    {
+        "courseNumber": "2643",
+        "subject": "math",
+        "title": "trigonometry",
+        "term": "spring"
+    },
+    {
+        "courseNumber": "2943",
+        "subject": "math",
+        "title": "vector calculus",
+        "term": "spring"
+    },
+    {
+        "courseNumber": "2237",
+        "subject": "math",
+        "title": "algebra",
+        "term": "spring"
+    },
+    {
+        "courseNumber": "5232",
+        "subject": "math",
+        "title": "discrete math",
+        "term": "spring"
+    },
+    {
+        "courseNumber": "9234",
+        "subject": "math",
+        "title": "integral calculus",
+        "term": "spring"
+    }
+]

@@ -1,0 +1,44 @@
+[
+    {
+        "name": "bob",
+        "email": "bob@gmail.com",
+        "password": "hunter2",
+        "role": "student"
+    },
+    {
+        "name": "john",
+        "email": "john@gmail.com",
+        "password": "hunter2",
+        "role": "student"
+    },
+    {
+        "name": "billy",
+        "email": "billy@gmail.com",
+        "password": "hunter2",
+        "role": "student"
+    },
+    {
+        "name": "tara",
+        "email": "tara@gmail.com",
+        "password": "hunter2",
+        "role": "instructor"
+    },
+    {
+        "name": "kate",
+        "email": "kate@gmail.com",
+        "password": "hunter2",
+        "role": "admin"
+    },
+    {
+        "name": "tom",
+        "email": "tom@gmail.com",
+        "password": "hunter2",
+        "role": "student"
+    },
+    {
+        "name": "phil",
+        "email": "phil@gmail.com",
+        "password": "hunter2",
+        "role": "instructor"
+    }
+]

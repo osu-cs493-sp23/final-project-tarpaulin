@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize')
 const sequelize = require('../lib/sequelize')
-// const bcrypt = require("bcryptjs")
+const bcrypt = require("bcryptjs")
 
 const { Assignment } = require('./assignment')
 const { Course } = require('./course')
@@ -8,6 +8,18 @@ const { Submission } = require('./submission')
 
 
 const User = sequelize.define('user', {
+	name: { type: DataTypes.TEXT, allowNull: false},
+	email: { type: DataTypes.STRING, allowNull: false, unique: true,
+		validate: {
+			isEmail: {
+				msg: "Email already exists!",
+			}
+		}},
+	password: { type: DataTypes.STRING, allowNull: false,
+		set(value) {
+			const hash = bcrypt.hashSync(value, 8)
+			this.setDataValue('password', hash)
+		}},
 	role: {
 		type: DataTypes.STRING,
 		defaultValue: 'student',
@@ -20,6 +32,9 @@ const User = sequelize.define('user', {
 exports.User= User
 
 exports.UserClientFields = [
+	'name',
+	'email',
+	'password',
 	'role'
 ]
 
