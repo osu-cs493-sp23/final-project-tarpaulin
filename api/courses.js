@@ -6,6 +6,9 @@ const { Course, fields } = require('../models/course')
 
 const router = Router()
 
+/*
+ * Link for all endpoints:    https://gist.github.com/robwhess/ec734c97a98868dbc1776718cd73b203
+ */
 
 // Post a new course
 router.post('/', async function (req, res, next) {
