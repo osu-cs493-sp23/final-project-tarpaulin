@@ -9,6 +9,12 @@ const { Course, fields } = require('../models/course')
 
 const router = Router()
 
+
+/*
+ * Link for all endpoints:    https://gist.github.com/robwhess/ec734c97a98868dbc1776718cd73b203
+ */
+
+
 // Get all courses
 router.get("/", async function (req, res, next){
     const coursePerPage = 10

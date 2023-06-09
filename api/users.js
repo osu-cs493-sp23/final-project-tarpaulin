@@ -55,9 +55,9 @@ router.post('/login', async function (req, res, next) {
 
 // Get an user by ID
 router.get('/:userId', async function (req, res, next) {
-    const assignmentId = req.params.assignmentId
+    const userId = req.params.userId
     try {
-      const user = await User.findByPk(assignmentId)
+      const user = await User.findByPk(userId)
       if (user) {
         res.status(200).send(user)
       } else {
@@ -70,13 +70,13 @@ router.get('/:userId', async function (req, res, next) {
 
 // Patch an user
 router.patch('/:userId', async function (req, res, next) {
-    const assignmentId = req.params.assignmentId
+    const userId = req.params.userId
     try {
       /*
        * Update user without allowing client to update businessId or userId.
        */
       const result = await User.update(req.body, {
-        where: { id: assignmentId },
+        where: { id: userId },
         fields: AssignmentClientFields.filter(
           field => field !== 'coursesId' && field !== 'userId' && field !== 'submissionsId'
         )
@@ -93,9 +93,9 @@ router.patch('/:userId', async function (req, res, next) {
 
 // Delete endpoint
 router.delete('/:userId', async function (req, res, next) {
-    const assignmentId = req.params.assignmentId
+    const userId = req.params.userId
     try {
-      const result = await User.destroy({ where: { id: assignmentId }})
+      const result = await User.destroy({ where: { id: userId }})
       if (result > 0) {
         res.status(204).send()
       } else {
