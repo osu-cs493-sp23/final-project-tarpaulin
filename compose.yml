@@ -1,0 +1,39 @@
+version: '3.7'
+
+services:
+  api:
+    build: .
+    image: tarpaulin-api
+    # restart: always
+    ports:
+      - 8000:8000
+    environment:
+      MYSQL_DB: ${MYSQL_DB}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      REDIS_PORT: 6379
+      REDIS_HOST: redis
+    depends_on:
+      - mysql
+      - redis
+
+  mysql:
+    image: mysql:latest
+    # restart: always
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_DB: ${MYSQL_DB}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+
+  redis:
+    image: redis:latest
+    # restart: always
+    ports:
+      - 6379:6379
+
