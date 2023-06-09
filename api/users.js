@@ -1,8 +1,10 @@
 const { Router } = require('express')
 const { ValidationError } = require('sequelize')
 
-const { User, UserClientFields } = require('../models/user')
+const { User, UserClientFields, validateUser } = require('../models/user')
 const router = Router()
+
+const { generateAuthToken, requireAuthentication, isAdminLoggedIn } = require("../lib/auth")
 
 
 // Post a new user
@@ -17,6 +19,38 @@ router.post('/', async function (req, res, next) {
         next(e)
       }
     }
+})
+
+/*
+ * Route to registered user to log in by sending their email address and password
+ */
+
+router.post('/login', async function (req, res, next) {
+  if (req.body && req.body.email && req.body.password) {
+      try {
+          const authenticated = await validateUser(
+              req.body.email,
+              req.body.password
+          )
+          if (authenticated) {
+              const token = generateAuthToken(req.body.email)
+              res.status(200).send({
+                  token: token
+              })
+          } else {
+              res.status(401).send({
+                  error: "Invalid authentication credentials"
+              })
+          }
+      } catch (e) {
+          next(e)
+      }
+  } else {
+      res.status(400).send({
+          error: "Request body requires `email` and `password`."
+      })
+  }
+
 })
 
 // Get an user by ID

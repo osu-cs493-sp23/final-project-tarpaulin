@@ -1,7 +1,7 @@
 {
   "name": "template-assignment-2",
   "version": "1.0.0",
-  "description": "A small business review API",
+  "description": "Tarpaulin API",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -14,6 +14,7 @@
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
     "morgan": "^1.10.0",
     "mysql2": "^3.2.4",
     "sequelize": "^6.32.0"
