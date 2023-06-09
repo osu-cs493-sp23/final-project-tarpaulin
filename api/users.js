@@ -24,7 +24,6 @@ router.post('/', async function (req, res, next) {
 /*
  * Route to registered user to log in by sending their email address and password
  */
-
 router.post('/login', async function (req, res, next) {
   if (req.body && req.body.email && req.body.password) {
       try {
@@ -51,21 +50,6 @@ router.post('/login', async function (req, res, next) {
       })
   }
 
-})
-
-// Get an user by ID
-router.get('/:userId', async function (req, res, next) {
-    const assignmentId = req.params.assignmentId
-    try {
-      const user = await User.findByPk(assignmentId)
-      if (user) {
-        res.status(200).send(user)
-      } else {
-        next()
-      }
-    } catch (e) {
-      next(e)
-    }
 })
 
 // Patch an user
@@ -107,6 +91,20 @@ router.delete('/:userId', async function (req, res, next) {
 })
 
 
-
+// Get an user by ID
+// Return user data and a list of classes the user is enrolled in
+router.get('/:userId', async function (req, res, next) {
+    const assignmentId = req.params.assignmentId
+    try {
+      const user = await User.findByPk(assignmentId)
+      if (user) {
+        res.status(200).send(user)
+      } else {
+        next()
+      }
+    } catch (e) {
+      next(e)
+    }
+})
 
 module.exports = router

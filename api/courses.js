@@ -1,22 +1,10 @@
 const { Router } = require('express')
 const { ValidationError } = require('sequelize')
 
-
-
-
 const { Assignment } = require('../models/assignment')
 const { Course, fields } = require('../models/course')
 
 const router = Router()
-
-// Get all courses
-router.get("/", async function (req, res, next){
-    const coursePerPage = 10
-
-    
-})
-
-
 
 
 // Post a new course
@@ -30,21 +18,6 @@ router.post('/', async function (req, res, next) {
       } else {
         next(e)
       }
-    }
-})
-
-// Get an course by ID
-router.get('/:courseId', async function (req, res, next) {
-    const assignmentId = req.params.assignmentId
-    try {
-      const course = await Course.findByPk(assignmentId)
-      if (course) {
-        res.status(200).send(course)
-      } else {
-        next()
-      }
-    } catch (e) {
-      next(e)
     }
 })
 
@@ -86,5 +59,44 @@ router.delete('/:courseId', async function (req, res, next) {
     }
 })
 
+
+// Course roster download
+// Download a CSV formatted roster for a specific course
+// id,name,email
+router.get('/:courseId/roster', async function (req, res, next) {
+
+})
+
+// Get all courses
+router.get("/", async function (req, res, next){
+    const coursePerPage = 10
+
+    
+})
+
+// Get an course by ID
+router.get('/:courseId', async function (req, res, next) {
+    const assignmentId = req.params.assignmentId
+    try {
+      const course = await Course.findByPk(assignmentId)
+      if (course) {
+        res.status(200).send(course)
+      } else {
+        next()
+      }
+    } catch (e) {
+      next(e)
+    }
+})
+
+// Get all studnets enrolled in a course
+router.get('/:courseId/students', async function (req, res, next) {
+
+})
+
+// Get all assignments in a course
+router.get('/:courseId/assignments', async function (req, res, next) {
+  
+})
 
 module.exports = router

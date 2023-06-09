@@ -74,6 +74,16 @@ router.delete('/:assignmentId', async function (req, res, next) {
 })
 
 
+// Assignment submission creation
+// Upload a file submission for a specific assignment
+// Return a URL to get the submission
+router.post('/:assignmentId/submissions', async function (req, res, next) {
 
+})
+
+// Download assignment submission 
+router.get('/:assignmentId/submissions', async function (req, res, next) {
+
+})
 
 module.exports = router
