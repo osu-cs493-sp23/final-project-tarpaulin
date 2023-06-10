@@ -8,7 +8,6 @@ const { Submission } = require('./submission')
 
 
 const User = sequelize.define('user', {
-	// id: { type: DataTypes.INTEGER, allowNull: false },
 	name: { type: DataTypes.TEXT, allowNull: false },
 	email: { type: DataTypes.STRING, allowNull: false, unique: true,
 	  validate: {
@@ -45,6 +44,20 @@ scopes: {
 	admin: {},
 	instructor: {}
 }
+})
+
+// Relations
+Course.belongsToMany(User, {
+	onDelete: "CASCADE",
+    onUpdate: "CASCADE",
+	through: 'courseUsers',
+	foreignKey: 'courseId'
+})
+User.belongsToMany(Course, {
+    onDelete: "CASCADE",
+    onUpdate: "CASCADE",
+	through: 'courseUsers',
+	foreignKey: 'userId'
 })
 
 exports.User = User

@@ -4,6 +4,7 @@ const sequelize = require('../lib/sequelize')
 // Relevant types
 const { Submission } = require("./submission.js")
 const { Assignment }= require("./assignment.js")
+const { User }= require("./user.js")
 
 
 // Schema describing various fields
@@ -22,16 +23,6 @@ const Course = sequelize.define('course', fields, {
         }
     ]
 })
-
-
-
-// Relations
-// Course.hasMany(Assignment, {
-//     onDelete: "CASCADE",
-//     onUpdate: "CASCADE",
-//     foreignKey: {allowNull: false}
-// })
-// Assignment.belongsTo(Course)
 
 exports.Course = Course
 exports.courseClientFields = Object.keys(fields)
