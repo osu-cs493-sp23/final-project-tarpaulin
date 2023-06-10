@@ -2,7 +2,6 @@ version: '3.7'
 
 services:
   redis:
-    # build: ./Dockerfile
     image: redis:latest
     restart: always
     ports:
@@ -11,7 +10,7 @@ services:
     #   REDIS_PORT: 8001
     #   REDIS_HOST: ${MYSQL_HOST}
   api:
-    build: ./Dockerfile
+    build: .
     restart: always
     ports:
       - 8000:8000
@@ -29,7 +28,6 @@ services:
     #   - redis
 
   mysql:
-    # build: ./Dockerfile
     image: mysql:latest
     restart: always
     ports:
@@ -39,4 +37,3 @@ services:
       MYSQL_USER: squid
       MYSQL_PASSWORD: squid
       MYSQL_ROOT_PASSWORD: squid
-
