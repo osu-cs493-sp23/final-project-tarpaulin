@@ -1,8 +1,10 @@
 const { Router } = require('express')
 const { ValidationError } = require('sequelize')
+const { User, UserClientFields, validateUser } = require('../models/user')
 
 const { Assignment } = require('../models/assignment')
-const { Course, fields } = require('../models/course')
+const { Course, fields, courseClientFields } = require('../models/course')
+const { requireAuthentication, getRole } = require('../lib/auth')
 
 const router = Router()
 
@@ -11,10 +13,26 @@ const router = Router()
  */
 
 // Post a new course
-router.post('/', async function (req, res, next) {
+// Only an authenticated User with 'admin' role can create a new Course.
+router.post('/', getRole, requireAuthentication, async function (req, res, next) {
     try {
-      const course = await Course.create(req.body, AssignmentClientFields)
-      res.status(201).send({ id: course.id })
+      if (req.userRole == "admin") {
+        const course = await Course.create(req.body, courseClientFields)
+
+        if (course) {
+          res.status(201).send({
+            id: course.id
+          })
+        } else {
+          res.status(400).send({
+            error: "Invalid instructor."
+          })
+        }
+      } else {
+        res.status(400).send({
+          error: "Invalid admin authorization."
+        })
+      }
     } catch (e) {
       if (e instanceof ValidationError) {
         res.status(400).send({ error: e.message })

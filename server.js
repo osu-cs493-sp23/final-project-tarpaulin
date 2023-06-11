@@ -17,7 +17,7 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // Rate limiting
-app.use(rateLimit)
+app.use('/', rateLimit)
 
 /*
  * All routes for the API are written in modules in the api/ directory.  The

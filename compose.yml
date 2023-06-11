@@ -6,9 +6,8 @@ services:
     restart: always
     ports:
       - 6379:6379
-    # environment:
-    #   REDIS_PORT: 8001
-    #   REDIS_HOST: ${MYSQL_HOST}
+    # REDIS_HOST: localhost
+
   api:
     build: .
     restart: always
@@ -20,12 +19,7 @@ services:
       MYSQL_PASSWORD: squid
       MYSQL_ROOT_PASSWORD: squid
       MYSQL_HOST: mysql
-      # MYSQL_PORT: 3306
       REDIS_HOST: redis
-      REDIS_PORT: 6379
-    # depends_on:
-    #   - mysql
-    #   - redis
 
   mysql:
     image: mysql:latest

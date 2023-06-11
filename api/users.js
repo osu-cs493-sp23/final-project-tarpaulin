@@ -1,17 +1,40 @@
-const { Router } = require('express')
+const { Router, application } = require('express')
 const { ValidationError } = require('sequelize')
 
-const { User, UserClientFields, validateUser } = require('../models/user')
+const { User, UserClientFields, validateUser, getUserByEmail2 } = require('../models/user')
 const router = Router()
 
-const { generateAuthToken, requireAuthentication, isAdminLoggedIn } = require("../lib/auth")
+const { generateAuthToken, requireAuthentication, getRole } = require("../lib/auth")
+const { validateAgainstSchema } = require('../lib/validation')
+const { rateLimit } = require('../lib/rate_limiting')
 
 
 // Post a new user
-router.post('/', async function (req, res, next) {
+// Only an authenticated User with 'admin' role can create users with the 'admin' or 'instructor' roles.
+router.post('/', getRole, async function (req, res, next) {
+  if (validateAgainstSchema(req.body, UserClientFields)) {
     try {
-      const user = await User.create(req.body, UserClientFields)
-      res.status(201).send({ id: user.id })
+      // const user = await User.create(req.body, UserClientFields)
+      // res.status(201).send({ id: user.id })
+
+
+      if (req.userRole == "admin") {
+        const user = await User.create(req.body, UserClientFields)
+        res.status(201).send({
+          _id: user.id
+        })
+      } else {
+        if (req.body.role != "admin" && req.body.role != "instructor") {
+          const user = await User.create(req.body)
+          res.status(201).send({
+            _id: user.id
+          })
+        } else {
+          res.status(403).send({
+            error: "The request was not made by an authenticated user."
+          })
+        }
+      }
     } catch (e) {
       if (e instanceof ValidationError) {
         res.status(400).send({ error: e.message })
@@ -19,6 +42,8 @@ router.post('/', async function (req, res, next) {
         next(e)
       }
     }
+  }
+    
 })
 
 /*
@@ -27,20 +52,25 @@ router.post('/', async function (req, res, next) {
 router.post('/login', async function (req, res, next) {
   if (req.body && req.body.email && req.body.password) {
       try {
+        const user = await getUserByEmail2(req.body.email)
+        // console.log("== user: ", user)
+        if(user) {
           const authenticated = await validateUser(
-              req.body.email,
-              req.body.password
-          )
-          if (authenticated) {
-              const token = generateAuthToken(req.body.email)
-              res.status(200).send({
-                  token: token
-              })
-          } else {
-              res.status(401).send({
-                  error: "Invalid authentication credentials"
-              })
+            req.body.email,
+            req.body.password
+        )
+        if (authenticated) {
+            const token = generateAuthToken(user)
+            res.status(200).send({
+                token: token
+            })
+        } else {
+            res.status(401).send({
+                error: "Invalid authentication credentials"
+            })
           }
+        }
+          
       } catch (e) {
           next(e)
       }
@@ -94,14 +124,24 @@ router.delete('/:userId', async function (req, res, next) {
 
 // Get an user by ID
 // Return user data and a list of classes the user is enrolled in
-router.get('/:userId', async function (req, res, next) {
-    const assignmentId = req.params.assignmentId
+router.get('/:userId', requireAuthentication, async function (req, res, next) {
+    const userId = req.params.userId
     try {
-      const user = await User.findByPk(assignmentId)
-      if (user) {
-        res.status(200).send(user)
+      console.log(req.userRole)
+      if (req.userRole == "admin" || req.params.userId == req.userId) {
+        const user = await User.findByPk(userId)
+
+        if (user) {
+          res.status(200).send(user)
+        } else {
+          res.status(404).send({
+            error: "User does not exist."
+          })
+        }
       } else {
-        next()
+        res.status(403).send({
+          error: "Unauthorized attempt."
+        })
       }
     } catch (e) {
       next(e)
