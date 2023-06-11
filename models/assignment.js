@@ -7,9 +7,10 @@ const { Course } = require("./course.js")
 
 // Schema describing various fields
 const Assignment = sequelize.define('assignment', {
+  courseId:{ type: DataTypes.INTEGER, allowNull: false},
   title: { type: DataTypes.STRING, allowNull: false },
-  dueDate: { type: DataTypes.DATE, allowNull: true},
-  pointValue: { type: DataTypes.INTEGER, allowNull: false}
+  points: { type: DataTypes.INTEGER, allowNull: false},
+  dueDate: { type: DataTypes.DATE, allowNull: false}  
 })
 
 // Relations

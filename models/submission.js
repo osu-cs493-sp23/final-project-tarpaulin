@@ -6,9 +6,11 @@ const { Assignment } = require('./assignment')
 
 // Schema describing various fields
 const Submission = sequelize.define('submission', {
-  score: { type: DataTypes.INTEGER, allowNull: false },
-  content: { type: DataTypes.STRING, allowNull: false },
-  time: { type: DataTypes.DATE, allowNull: false}
+  assignmentId: {type: DataTypes.INTEGER, allowNull: false},
+  studentId: {type: DataTypes.INTEGER, allowNull: false},
+  time: { type: DataTypes.DATE, allowNull: false},
+  grade: { type: DataTypes.FLOAT, allowNull: false },
+  file: { type: DataTypes.STRING, allowNull: false }
 })
 
 // Relations

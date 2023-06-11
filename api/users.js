@@ -7,7 +7,7 @@ const router = Router()
 const { generateAuthToken, requireAuthentication, isAdminLoggedIn } = require("../lib/auth")
 
 
-// Post a new user
+// Post a new user, only admins can create admin and instructors
 router.post('/', async function (req, res, next) {
     try {
       const user = await User.create(req.body, UserClientFields)
@@ -53,51 +53,51 @@ router.post('/login', async function (req, res, next) {
 })
 
 
-// Patch an user
-router.patch('/:userId', async function (req, res, next) {
-    const userId = req.params.userId
-    try {
-      /*
-       * Update user without allowing client to update businessId or userId.
-       */
-      const result = await User.update(req.body, {
-        where: { id: userId },
-        fields: AssignmentClientFields.filter(
-          field => field !== 'coursesId' && field !== 'userId' && field !== 'submissionsId'
-        )
-      })
-      if (result[0] > 0) {
-        res.status(204).send()
-      } else {
-        next()
-      }
-    } catch (e) {
-      next(e)
-    }
-})
+// Patch a user, admin only
+// router.patch('/:userId', async function (req, res, next) {
+//     const userId = req.params.userId
+//     try {
+//       /*
+//        * Update user without allowing client to update businessId or userId.
+//        */
+//       const result = await User.update(req.body, {
+//         where: { id: userId },
+//         fields: AssignmentClientFields.filter(
+//           field => field !== 'coursesId' && field !== 'userId' && field !== 'submissionsId'
+//         )
+//       })
+//       if (result[0] > 0) {
+//         res.status(204).send()
+//       } else {
+//         next()
+//       }
+//     } catch (e) {
+//       next(e)
+//     }
+// })
 
-// Delete endpoint
-router.delete('/:userId', async function (req, res, next) {
-    const userId = req.params.userId
-    try {
-      const result = await User.destroy({ where: { id: userId }})
-      if (result > 0) {
-        res.status(204).send()
-      } else {
-        next()
-      }
-    } catch (e) {
-      next(e)
-    }
-})
+// Delete endpoint - admin only
+// router.delete('/:userId', async function (req, res, next) {
+//     const userId = req.params.userId
+//     try {
+//       const result = await User.destroy({ where: { id: userId }})
+//       if (result > 0) {
+//         res.status(204).send()
+//       } else {
+//         next()
+//       }
+//     } catch (e) {
+//       next(e)
+//     }
+// })
 
 
 // Get an user by ID
-// Return user data and a list of classes the user is enrolled in
+// Return user data and a list of classes the user is enrolled in OR a list of classes an instructor is teaching
 router.get('/:userId', async function (req, res, next) {
-    const assignmentId = req.params.assignmentId
+    const userId = req.params.assignmentId
     try {
-      const user = await User.findByPk(assignmentId)
+      const user = await User.findByPk(userId)
       if (user) {
         res.status(200).send(user)
       } else {
