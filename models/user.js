@@ -2,10 +2,6 @@ const { DataTypes } = require('sequelize')
 const sequelize = require('../lib/sequelize')
 const bcrypt = require("bcryptjs")
 
-const { Assignment } = require('./assignment')
-const { Course } = require('./course')
-const { Submission } = require('./submission')
-
 
 const User = sequelize.define('user', {
 	name: { type: DataTypes.TEXT, allowNull: false },
@@ -44,20 +40,6 @@ scopes: {
 	admin: {},
 	instructor: {}
 }
-})
-
-// Relations
-Course.belongsToMany(User, {
-	onDelete: "CASCADE",
-    onUpdate: "CASCADE",
-	through: 'courseUsers',
-	foreignKey: 'courseId'
-})
-User.belongsToMany(Course, {
-    onDelete: "CASCADE",
-    onUpdate: "CASCADE",
-	through: 'courseUsers',
-	foreignKey: 'userId'
 })
 
 exports.User = User

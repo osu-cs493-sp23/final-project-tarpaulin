@@ -1,23 +1,22 @@
 const { DataTypes } = require('sequelize')
-
 const sequelize = require('../lib/sequelize')
 // Relevant types
-const { Submission } = require("./submission.js")
-const { Assignment }= require("./assignment.js")
-const { User }= require("./user.js")
+const { Assignment } = require("./assignment.js")
+const { User } = require("./user.js")
+
 
 
 // Schema describing various fields
 const fields = {
-    courseNumber: { type: DataTypes.STRING, allowNull: false },
-    subject: { type: DataTypes.STRING, allowNull: false },
-    title: { type: DataTypes.STRING, allowNull: false },
-    term: { type: DataTypes.STRING, allowNull: false},
-    instructorId: { type: DataTypes.INTEGER, allowNull: false},
+    number: { type: DataTypes.STRING, allowNull: false, unique: false },
+    subject: { type: DataTypes.STRING, allowNull: false, unique: false },
+    title: { type: DataTypes.STRING, allowNull: false, unique: false },
+    term: { type: DataTypes.STRING, allowNull: false, unique: false}
+    // instructorId: { type: DataTypes.INTEGER, allowNull: false},
 }
 
 const Course = sequelize.define('course', fields, {
-    idx: [
+    indexes: [
         {
             unique: true,
             fields: ["subject", "number", "term"]
@@ -26,5 +25,37 @@ const Course = sequelize.define('course', fields, {
 })
 
 exports.Course = Course
+exports.courseSchema = fields
 exports.courseClientFields = Object.keys(fields)
-exports.courseClientFields.push("instructorId")
+
+Course.hasMany(Assignment, {
+	onDelete: "CASCADE",
+	onUpdate: "CASCADE",
+	foreignKey: {allowNull: false}
+})
+Assignment.belongsTo(Course)
+
+const UserCourse = sequelize.define("usercourse", {}, {
+	timestamps: false,
+	indexes: [
+		{
+			unique: true,
+			fields: ["courseId", "userId"]
+		}
+	]
+})
+Course.belongsToMany(User, {
+	through: UserCourse,
+	as: "users",
+	foreignKey: "courseId",
+	onDelete: "CASCADE",
+	onUpdate: "CASCADE",
+})
+User.belongsToMany(Course, {
+	through: UserCourse,
+	as: "courses",
+	foreignKey: "userId",
+	onDelete: "CASCADE",
+	onUpdate: "CASCADE",
+})
+exports.courseSchema.instructorId = {type: DataTypes.INTEGER, allowNull: false, unique: false}

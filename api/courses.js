@@ -1,8 +1,22 @@
 const { Router } = require('express')
 const { ValidationError } = require('sequelize')
+const { Readable } = require("node:stream")
+
+
+//Helpers
+const { generateHATEOASlinks, getOnly} = require("../lib/pagination.js")
+const { validateAgainstSchema } = require("../lib/validation.js")
+// const { generateRosterCSV } = require("../lib/csv.js")
+const EXCLUDE_ATTRIBUTES_LIST = ["createdAt", "updatedAt"]
+const EXCLUDE_USER_ATTRIBUTES_LIST = EXCLUDE_ATTRIBUTES_LIST.concat(["password"])
+
+
+
+
 
 const { Assignment } = require('../models/assignment')
-const { Course, fields } = require('../models/course')
+const { User } = require("../models/user")
+const { Course, courseSchema, courseClientFields } = require('../models/course')
 
 const router = Router()
 
@@ -17,40 +31,106 @@ const router = Router()
 // })
 
 // Get all courses
-// router.get("/", async function (req, res, next){
-//     const coursePerPage = 10
-// })
+router.get("/", async function (req, res, next){
+    const coursesPerPage = 10
+
+    var page = parseInt(req.query.page) || 1
+    page = page < 1 ? 1 : page
+    var offset = (page -1) * coursesPerPage
+
+    var queryParams = getOnly(req.query, ["subject", "number", "term"])
+    var result = null
+    try {
+        result = await Course.findAndCountAll({
+            where: queryParams,
+            limit: coursesPerPage,
+            offset: offset,
+            attributes: {},
+            include: includeInstructorInResult()
+        })
+    } catch (err){
+        next(err)
+        return
+    }
+    resultsPage = []
+    result.rows.forEach((course) => {
+        resultsPage.push(courseResponseFormSequelizeModel(course))
+    })
+
+    var lastPage = Math.ceil(result.count / coursesPerPage)
+    res.status(200).json({
+        courses: resultsPage,
+        links: generateHATEOASlinks(
+            req.originalUrl.split("?")[0],
+            page,
+            lastPage,
+            queryParams
+        )
+    })
+})
 
 
 // Post a new course
-// router.post('/', async function (req, res, next) {
-//     try {
-//       const course = await Course.create(req.body, AssignmentClientFields)
-//       res.status(201).send({ id: course.id })
-//     } catch (e) {
-//       if (e instanceof ValidationError) {
-//         res.status(400).send({ error: e.message })
-//       } else {
-//         next(e)
-//       }
-//     }
-// })
+router.post('/', async function (req, res, next) {
+    // if(!(req.user.role === "admin")){
+    //     res.status(403).json({
+    //         error: "The request was not made by an authenticated User satisfying the authorization criteria"
+    //     })
+    // }
+
+    var newCourse = req.body
+    if(!validateAgainstSchema(newCourse, courseSchema)){
+        res.status(400).json({
+                error: "The request body was either not present or did not contain a valid Course object."
+        })
+        return
+    }
+
+    var course = {}
+    try {
+        course = await Course.create(newCourse, courseClientFields)
+        await course.addUser(newCourse.instructorId)
+    } catch (err){
+        if (err instanceof ValidationError){
+            res.status(400).json({
+                error: "The request body was either not present or did not contain a valid Course object."
+            })
+        } else {
+            next(err)
+        }
+        return
+    }
+    res.status(201).json({id: course.id})  
+
+})    
+    
+    
+    
+    
+    
+    
 
 
 // Get an course by ID
-// router.get('/:courseId', async function (req, res, next) {
-//     const assignmentId = req.params.assignmentId
-//     try {
-//       const course = await Course.findByPk(assignmentId)
-//       if (course) {
-//         res.status(200).send(course)
-//       } else {
-//         next()
-//       }
-//     } catch (e) {
-//       next(e)
-//     }
-// })
+router.get('/:courseId', async function (req, res, next) {
+    const courseId = req.params.courseId
+
+
+    var courseResult = null
+    try {
+        courseResult = await Course.findByPk(courseId, {
+                            attributes: {exclude: EXCLUDE_ATTRIBUTES_LIST},
+                            include: includeInstructorInCourseSearch})
+        const course = await Course.findByPk(courseId)
+      if (course) {
+        res.status(200).send(course)
+      } else {
+        next()
+      }
+    } catch (e) {
+      next(e)
+    }
+})
 
 // Patch an course
 // router.patch('/:courseId', async function (req, res, next) {
@@ -115,7 +195,19 @@ const router = Router()
 
 
 
+function includeInstructorInResult(exclude){
+	var xcldUsrAttrLst = EXCLUDE_USER_ATTRIBUTES_LIST
+	if (exclude)
+		xcldUsrAttrLst.concat(exclude)
 
+	return {
+		model: User,
+		as: "users",
+		where: {role: "instructor"},
+		through: {attributes: []},
+		attributes: {exclude: xcldUsrAttrLst}
+	}
+}
 
 
 
