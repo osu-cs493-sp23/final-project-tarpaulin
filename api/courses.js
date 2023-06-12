@@ -104,17 +104,11 @@ router.post('/', async function (req, res, next) {
 
 })    
     
-    
-    
-    
-    
-    
 
 
 // Get an course by ID
 router.get('/:courseId', async function (req, res, next) {
     const courseId = req.params.courseId
-
 
     var courseResult = null
     try {
