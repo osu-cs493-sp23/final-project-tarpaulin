@@ -95,17 +95,50 @@ router.post('/login', async function (req, res, next) {
 // Get an user by ID
 // Return user data and a list of classes the user is enrolled in OR a list of classes an instructor is teaching
 router.get('/:userId', async function (req, res, next) {
-    const userId = req.params.assignmentId
+    const userId = parseInt(req.params.userId)
+
     try {
       const user = await User.findByPk(userId)
       if (user) {
-        res.status(200).send(user)
+        courses = getUserCourses(user)
+        res.status(200).send({
+          username: user.name,
+          email: user.email,
+          role: user.role,
+          courses: courses
+        })
       } else {
+        console.log("User does not exist")
         next()
       }
     } catch (e) {
       next(e)
     }
 })
+
+
+
+async function getUserCourses(user){                // findall parameters likely need to be adjusted
+  role = user.role
+  
+  if(role === "student"){
+    courses = Course.findAll({
+      where: ({id: userId})
+    })
+  } else if(role === "instructor"){
+    courses = Course.findAll({
+      where: ({id: userId})
+    })
+  } else{
+    return null
+  }
+  return courses
+}
+
+
+
+
+
+
 
 module.exports = router

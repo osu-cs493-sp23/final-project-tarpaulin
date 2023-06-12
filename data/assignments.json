@@ -2,26 +2,26 @@
     {
         "title": "title 1",
         "dueDate": "4/4/23",
-        "pointValue": 79
+        "points": 79
     },
     {
         "title": "title 2",
         "dueDate": "4/4/23",
-        "pointValue": 23
+        "points": 23
     },
     {
         "title": "title 3",
         "dueDate": "4/4/23",
-        "pointValue": 56
+        "points": 56
     },
     {
         "title": "title 4",
         "dueDate": "4/4/23",
-        "pointValue": 33
+        "points": 33
     },
     {
         "title": "title 5",
         "dueDate": "4/4/23",
-        "pointValue": 64
+        "points": 64
     }
 ]
