@@ -9,15 +9,6 @@ const { validateAgainstSchema } = require('../lib/validation')
 const { rateLimit } = require('../lib/rate_limiting')
 
 
-// Post a new user
-
-//Implemented in main, not in endpoints
-// Only an authenticated User with 'admin' role can create users with the 'admin' or 'instructor' roles.
-// router.post('/', getRole, async function (req, res, next) {
-//   if (validateAgainstSchema(req.body, UserClientFields)) {
-///////////////////////////////////////
-
-
 // Post a new user, only admins can create admin and instructors
 router.post('/', async function (req, res, next) {
     try {
@@ -129,36 +120,52 @@ router.post('/login', async function (req, res, next) {
 
 
 // Get an user by ID
-// Return user data and a list of classes the user is enrolled in
-router.get('/:userId', requireAuthentication, async function (req, res, next) {
-    const userId = req.params.userId
-    try {
-      console.log(req.userRole)
-      if (req.userRole == "admin" || req.params.userId == req.userId) {
-        const user = await User.findByPk(userId)
-
-        if (user) {
-          res.status(200).send(user)
-        } else {
-          res.status(404).send({
-            error: "User does not exist."
-          })
-        }
 // Return user data and a list of classes the user is enrolled in OR a list of classes an instructor is teaching
-// router.get('/:userId', async function (req, res, next) {
-//     const userId = req.params.assignmentId
-//     try {
-//       const user = await User.findByPk(userId)
-//       if (user) {
-//         res.status(200).send(user)
-//       } else {
-//         res.status(403).send({
-//           error: "Unauthorized attempt."
-//         })
+router.get('/:userId', async function (req, res, next) {
+    const userId = parseInt(req.params.userId)
+
+    try {
+      const user = await User.findByPk(userId)
+      if (user) {
+        courses = getUserCourses(user)
+        res.status(200).send({
+          username: user.name,
+          email: user.email,
+          role: user.role,
+          courses: courses
+        })
+      } else {
+        console.log("User does not exist")
+        next()
       }
     } catch (e) {
       next(e)
     }
 })
+
+
+
+async function getUserCourses(user){                // findall parameters likely need to be adjusted
+  role = user.role
+  
+  if(role === "student"){
+    courses = Course.findAll({
+      where: ({id: userId})
+    })
+  } else if(role === "instructor"){
+    courses = Course.findAll({
+      where: ({id: userId})
+    })
+  } else{
+    return null
+  }
+  return courses
+}
+
+
+
+
+
+
 
 module.exports = router
