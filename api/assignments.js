@@ -73,17 +73,14 @@ router.delete('/:assignmentId', async function (req, res, next) {
     }
 })
 
+// Get all submissions for an assignment, paginated, authenticated via instructorId
+// router.get('/:assignmentId/submissions', async function (req, res, next) {
+// })
 
-// Assignment submission creation
-// Upload a file submission for a specific assignment
-// Return a URL to get the submission
-router.post('/:assignmentId/submissions', async function (req, res, next) {
+// Post a new submission to an assignment, adds data to database, only student with role in courseId can submit
+// router.post('/:assignmentId/submissions', async function (req, res, next) {
+// })
 
-})
 
-// Download assignment submission 
-router.get('/:assignmentId/submissions', async function (req, res, next) {
-
-})
 
 module.exports = router

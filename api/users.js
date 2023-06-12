@@ -10,9 +10,16 @@ const { rateLimit } = require('../lib/rate_limiting')
 
 
 // Post a new user
+
+//Implemented in main, not in endpoints
 // Only an authenticated User with 'admin' role can create users with the 'admin' or 'instructor' roles.
-router.post('/', getRole, async function (req, res, next) {
-  if (validateAgainstSchema(req.body, UserClientFields)) {
+// router.post('/', getRole, async function (req, res, next) {
+//   if (validateAgainstSchema(req.body, UserClientFields)) {
+///////////////////////////////////////
+
+
+// Post a new user, only admins can create admin and instructors
+router.post('/', async function (req, res, next) {
     try {
       // const user = await User.create(req.body, UserClientFields)
       // res.status(201).send({ id: user.id })
@@ -83,43 +90,43 @@ router.post('/login', async function (req, res, next) {
 })
 
 
-// Patch an user
-router.patch('/:userId', async function (req, res, next) {
-    const userId = req.params.userId
-    try {
-      /*
-       * Update user without allowing client to update businessId or userId.
-       */
-      const result = await User.update(req.body, {
-        where: { id: userId },
-        fields: AssignmentClientFields.filter(
-          field => field !== 'coursesId' && field !== 'userId' && field !== 'submissionsId'
-        )
-      })
-      if (result[0] > 0) {
-        res.status(204).send()
-      } else {
-        next()
-      }
-    } catch (e) {
-      next(e)
-    }
-})
+// Patch a user, admin only
+// router.patch('/:userId', async function (req, res, next) {
+//     const userId = req.params.userId
+//     try {
+//       /*
+//        * Update user without allowing client to update businessId or userId.
+//        */
+//       const result = await User.update(req.body, {
+//         where: { id: userId },
+//         fields: AssignmentClientFields.filter(
+//           field => field !== 'coursesId' && field !== 'userId' && field !== 'submissionsId'
+//         )
+//       })
+//       if (result[0] > 0) {
+//         res.status(204).send()
+//       } else {
+//         next()
+//       }
+//     } catch (e) {
+//       next(e)
+//     }
+// })
 
-// Delete endpoint
-router.delete('/:userId', async function (req, res, next) {
-    const userId = req.params.userId
-    try {
-      const result = await User.destroy({ where: { id: userId }})
-      if (result > 0) {
-        res.status(204).send()
-      } else {
-        next()
-      }
-    } catch (e) {
-      next(e)
-    }
-})
+// Delete endpoint - admin only
+// router.delete('/:userId', async function (req, res, next) {
+//     const userId = req.params.userId
+//     try {
+//       const result = await User.destroy({ where: { id: userId }})
+//       if (result > 0) {
+//         res.status(204).send()
+//       } else {
+//         next()
+//       }
+//     } catch (e) {
+//       next(e)
+//     }
+// })
 
 
 // Get an user by ID
@@ -138,10 +145,17 @@ router.get('/:userId', requireAuthentication, async function (req, res, next) {
             error: "User does not exist."
           })
         }
-      } else {
-        res.status(403).send({
-          error: "Unauthorized attempt."
-        })
+// Return user data and a list of classes the user is enrolled in OR a list of classes an instructor is teaching
+// router.get('/:userId', async function (req, res, next) {
+//     const userId = req.params.assignmentId
+//     try {
+//       const user = await User.findByPk(userId)
+//       if (user) {
+//         res.status(200).send(user)
+//       } else {
+//         res.status(403).send({
+//           error: "Unauthorized attempt."
+//         })
       }
     } catch (e) {
       next(e)
