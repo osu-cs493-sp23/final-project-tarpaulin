@@ -1,13 +1,17 @@
 version: '3.7'
 
 services:
-  redis:
-    image: redis:latest
-    restart: always
-    ports:
-      - 6379:6379
-    # REDIS_HOST: localhost
-
+  # redis:
+  #   image: redis:latest
+  #   restart: always
+  #   ports:
+  #     - 6379:6379
+  #   networks:
+  #     - backend
+    # command: /bin/sh -c "redis-server --requirepass $$REDIS_HOST_PASSWORD"
+    # env_file:
+    #   - redis.env
+    
   api:
     build: .
     restart: always
@@ -19,7 +23,16 @@ services:
       MYSQL_PASSWORD: squid
       MYSQL_ROOT_PASSWORD: squid
       MYSQL_HOST: mysql
-      REDIS_HOST: redis
+      # REDIS_HOST: redis
+    # networks:
+    #   - frontend
+    #   - backend
+    # env_file:
+    #   - redis.env
+    #   - .env
+    depends_on:
+      - mysql
+      # - redis
 
   mysql:
     image: mysql:latest
@@ -31,3 +44,13 @@ services:
       MYSQL_USER: squid
       MYSQL_PASSWORD: squid
       MYSQL_ROOT_PASSWORD: squid
+    # networks:
+    #   - backend
+
+# networks:
+#   frontend:
+#     name: frontend-network
+#     driver: bridge
+#   backend:
+#     name: backend-network
+#     driver: bridge
