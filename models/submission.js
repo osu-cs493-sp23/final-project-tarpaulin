@@ -9,7 +9,7 @@ const Submission = sequelize.define('submission', {
   studentId: {type: DataTypes.INTEGER, allowNull: false},
   dueDate: { type: DataTypes.DATE, allowNull: false},
   grade: { type: DataTypes.FLOAT, allowNull: false },
-  path: { type: DataTypes.STRING, allowNull: false }
+  fileName: { type: DataTypes.STRING, allowNull: false }
 })
 
 
@@ -17,6 +17,8 @@ exports.Submission = Submission
 
 exports.SubmissionClientFields = [
   'assignmentId',
-  'time',
-  'grade'
+  'studentId',
+  'dueDate',
+  'grade',
+  'fileName'
 ]

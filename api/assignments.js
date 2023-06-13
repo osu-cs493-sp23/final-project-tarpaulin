@@ -131,19 +131,28 @@ router.get('/:assignmentId/submissions', async function (req, res, next) {
 })
 
 // Post a new submission to an assignment, adds data to database, only student with role in courseId can submit
-router.post('/:assignmentId/submissions', upload.single('sub'), async (req, res, next) => {
-  console.log("  -- req.sub:", req.sub)
+router.post('/:assignmentId/submissions', upload.single('file'), async function (req, res, next) {
+  console.log("  -- req.file:", req.file)
   console.log("  -- req.body:", req.body)
-  if (req.sub && req.body) {
+  if (req.file &&
+    req.params.assignmentId &&
+    req.body.studentId &&
+    req.body.dueDate &&
+    req.body.grade &&
+    req.file.filename) {
     try {
-      var newSubmission = {
+      var submissionBody = {
         assignmentId: req.params.assignmentId,
         studentId: req.body.studentId,
         dueDate: req.body.dueDate,
         grade: req.body.grade,
-        path: req.sub.path
+        fileName: req.file.filename
       }
-      res.status(201).json(newSubmission)
+
+      const newSubmission = await Submission.create(submissionBody, SubmissionsClientFields)
+      res.status(201).json({
+        id: newSubmission.id
+      })
     } catch (e) {
       next(e)
     }
