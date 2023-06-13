@@ -1,31 +1,54 @@
 const { Router, application } = require('express')
 const { ValidationError } = require('sequelize')
 
+const { Course, UserCourse } = require('../models/course')
 const { User, UserClientFields, validateUser, getUserByEmail2 } = require('../models/user')
 const router = Router()
 
 const { generateAuthToken, requireAuthentication, getRole } = require("../lib/auth")
 const { validateAgainstSchema } = require('../lib/validation')
-const { rateLimit } = require('../lib/rate_limiting')
+// const { rateLimit2 } = require('../lib/rate_limiting')
+const { limiter, authLimiter } = require('../lib/limiter')
+
+const express = require('express')
+// const router = express.Router()
+const app = express()
+// app.use(limiter)
+const rateLimit = require('express-rate-limit')
+
+
+// Create the first admin, debug only
+router.post('/createAdmin', async function(req, res, next){
+    try{
+      const user = await User.create(req.body, UserClientFields)
+      res.status(201).send({
+        id: user.id
+      })
+    } catch (e){
+      next(e)
+    }
+})
+
 
 
 // Post a new user, only admins can create admin and instructors
-router.post('/', async function (req, res, next) {
+router.post('/', requireAuthentication, async function (req, res, next) {
     try {
       // const user = await User.create(req.body, UserClientFields)
       // res.status(201).send({ id: user.id })
 
 
-      if (req.userRole == "admin") {
+
+      if (req.userRole === "admin") {
         const user = await User.create(req.body, UserClientFields)
         res.status(201).send({
-          _id: user.id
+          id: user.id
         })
       } else {
         if (req.body.role != "admin" && req.body.role != "instructor") {
           const user = await User.create(req.body)
           res.status(201).send({
-            _id: user.id
+            id: user.id
           })
         } else {
           res.status(403).send({
@@ -80,6 +103,9 @@ router.post('/login', async function (req, res, next) {
 })
 
 
+
+
+
 // Patch a user, admin only
 // router.patch('/:userId', async function (req, res, next) {
 //     const userId = req.params.userId
@@ -118,6 +144,8 @@ router.post('/login', async function (req, res, next) {
 //     }
 // })
 
+// app.use(limiter)
+
 
 // Get an user by ID
 // Return user data and a list of classes the user is enrolled in OR a list of classes an instructor is teaching
@@ -127,7 +155,7 @@ router.get('/:userId', async function (req, res, next) {
     try {
       const user = await User.findByPk(userId)
       if (user) {
-        courses = getUserCourses(user)
+        courses = getUserCourses(user, userId)
         res.status(200).send({
           username: user.name,
           email: user.email,
@@ -145,24 +173,54 @@ router.get('/:userId', async function (req, res, next) {
 
 
 
-async function getUserCourses(user){                // findall parameters likely need to be adjusted
+async function getUserCourses(user, userId){                // findall parameters likely need to be adjusted
   role = user.role
   
   if(role === "student"){
-    courses = Course.findAll({
-      where: ({id: userId})
+    courses = await UserCourse.findAll({
+      where: ({userId: userId})
     })
   } else if(role === "instructor"){
-    courses = Course.findAll({
-      where: ({id: userId})
+    courses = await UserCourse.findAll({
+      where: ({userId: userId})
     })
   } else{
+    courses = []
     return null
   }
   return courses
 }
 
 
+//////////// TESTING ///////////////
+
+// router.get("/:userId", requireAuthentication, authLimiter, (req, res, next) => {
+//   const userId = req.params.userId
+
+//   try {
+//     console.log(req.userRole)
+
+//     if (req.userRole == "admin" || req.params.userId == req.userId) {
+//       const user = User.findByPk(userId)
+//       user.then(function(result) {
+//         res.status(200).send(result)
+//       })
+//     } else {
+//       res.status(404).send({
+//         error: "Cannot access resource."
+//       })
+//     }
+//   } catch (e) {
+//     next(e)
+//   }
+// })
+
+// router.use(limiter)
+
+
+
+
+/////////////////////////////
 
 
 
