@@ -12,7 +12,7 @@ const EXCLUDE_USER_ATTRIBUTES_LIST = EXCLUDE_ATTRIBUTES_LIST.concat(["password"]
 
 const { Assignment } = require('../models/assignment')
 const { User } = require("../models/user")
-const { Course, courseSchema, courseClientFields } = require('../models/course')
+const { Course, UserCourse, courseSchema, courseClientFields } = require('../models/course')
 const { requireAuthentication, getRole } = require('../lib/auth.js')
 
 const router = Router()
@@ -294,82 +294,104 @@ router.get('/:courseId/students', requireAuthentication, async function (req, re
  * authenticated 'instructor' User whose ID matches the `instructorId`
  * of the Course can update the students enrolled in the Course.
  */
-router.post('/:courseId/students', async function (req, res, next){
-    
-    var addList = []
-    var removeList = []
-    if(!(req.body && (req.body.add || req.body.remove))){
-        res.status(400).json({
-            error: "Invalid request body or no valid studentIds for specified course"
-        })
-        return
-    } 
-    if (req.body.add){
-        addList = req.body.add
-    } 
-    if (req.body.remove){
-        removeList = req.body.remove
-    }
+router.post('/:courseId/students/:userId', async function (req, res, next){
+    const course = await Course.findByPk(req.params.courseId)
+    const user = await User.findByPk(req.params.userId)
 
-    const courseId = parseInt(req.params.courseId) || 0
+    console.log(" -- course: ", course)
+    console.log(" -- user: ", user)
 
-    var course = null
-    try{
-        // course = await Course.findByPk(courseId, {
-        //     attributes: {exclude: EXCLUDE_ATTRIBUTES_LIST},
-        //     include: includeInstructorInResult()
-        // })
-        course = await Course.findByPk(courseId)
-    } catch (err){
-        next(err)
-        return
-    }
-
-
-    if(!course){
-        next()
-        return
-    }
-
-
-
-    if (!(req.userRole === "admin" || (req.userRole === "instructor" && req.user.id === course.dataValues.users[0].id))){
-		res.status(403).json({
-			error: "Unauthorized access to specified resource."
-		})
-		return
-	}
-    
-    var response = {}
-    var addFailed = []
-    var removeFailed = []
-    console.log(addList)
-    if(addList.length > 0){
-        addList.forEach(async studentId => {
-            try{
-                await course.addUser(studentId)
-            } catch (err){
-                addFailed.push(studentId)
-            }
-        })
-        if(addFailed.length > 0){
-            response["not_added"] = addFailed
+    if (course && user) {
+        const UserCourseBody = {
+            courseId: course.id,
+            userId: user.id
         }
-    }
 
-    if(removeList.length > 0){
-        removeList.forEach(async studentId=> {
-            try{
-                await course.removeUser(studentId)
-            } catch (err){
-                removeFailed.push(studentId)
-            }
+        console.log(" -- UserCourseBody: ", UserCourseBody)
+
+        const newUserCurse = await UserCourse.create(UserCourseBody)
+
+        res.status(201).send("Linked User to Course")
+    } else {
+        res.status(404).send({
+            err: "course/user not found"
         })
-        if(removeFailed.length > 0){
-            response["not_removed"] = removeFailed
-        }
     }
-    res.status(201).json(response)
+    
+    // var addList = []
+    // var removeList = []
+    // if(!(req.body && (req.body.add || req.body.remove))){
+    //     res.status(400).json({
+    //         error: "Invalid request body or no valid studentIds for specified course"
+    //     })
+    //     return
+    // } 
+    // if (req.body.add){
+    //     addList = req.body.add
+    // } 
+    // if (req.body.remove){
+    //     removeList = req.body.remove
+    // }
+
+    // const courseId = parseInt(req.params.courseId) || 0
+
+    // var course = null
+    // try{
+    //     // course = await Course.findByPk(courseId, {
+    //     //     attributes: {exclude: EXCLUDE_ATTRIBUTES_LIST},
+    //     //     include: includeInstructorInResult()
+    //     // })
+    //     course = await Course.findByPk(courseId)
+    // } catch (err){
+    //     next(err)
+    //     return
+    // }
+
+
+    // if(!course){
+    //     next()
+    //     return
+    // }
+
+
+
+    // if (!(req.userRole === "admin" || (req.userRole === "instructor" && req.user.id === course.dataValues.users[0].id))){
+	// 	res.status(403).json({
+	// 		error: "Unauthorized access to specified resource."
+	// 	})
+	// 	return
+	// }
+    
+    // var response = {}
+    // var addFailed = []
+    // var removeFailed = []
+    // console.log(addList)
+    // if(addList.length > 0){
+    //     addList.forEach(async studentId => {
+    //         try{
+    //             await course.addUser(studentId)
+    //         } catch (err){
+    //             addFailed.push(studentId)
+    //         }
+    //     })
+    //     if(addFailed.length > 0){
+    //         response["not_added"] = addFailed
+    //     }
+    // }
+
+    // if(removeList.length > 0){
+    //     removeList.forEach(async studentId=> {
+    //         try{
+    //             await course.removeUser(studentId)
+    //         } catch (err){
+    //             removeFailed.push(studentId)
+    //         }
+    //     })
+    //     if(removeFailed.length > 0){
+    //         response["not_removed"] = removeFailed
+    //     }
+    // }
+    // res.status(201).json(response)
 })
 
 
