@@ -294,7 +294,7 @@ router.get('/:courseId/students', requireAuthentication, async function (req, re
  * authenticated 'instructor' User whose ID matches the `instructorId`
  * of the Course can update the students enrolled in the Course.
  */
-router.post('/:courseId/students', async function (req, res, next){
+router.post('/:courseId/students', requireAuthentication, async function (req, res, next){
     const course = await Course.findByPk(req.params.courseId)
     console.log(" -- course: ", course)
 
@@ -309,13 +309,28 @@ router.post('/:courseId/students', async function (req, res, next){
                 courseId: course.id,
                 userId: user.id
             }
-            console.log(" -- UserCourseBody: ", UserCourseBody)
-            const newUserCurse = await UserCourse.create(UserCourseBody)
-            
+
+            const { count } = await UserCourse.findAndCountAll({
+                    where: {
+                        courseId: course.id,
+                        userId: user.id
+                        },
+                })
+            console.log(" -- dupCount: ", count)
+            if (count != 0) {
+                res.status(400).send({
+                    err: "UserCourse relationship allready exists"
+                })
+                return                    
+            } else {
+                console.log(" -- UserCourseBody: ", UserCourseBody)
+                const newUserCurse = await UserCourse.create(UserCourseBody)                        
+            }         
         } else {
             res.status(404).send({
                 err: "course/user not found"
             })
+            return
         }
     }
     res.status(201).send("Linked User to Course")
