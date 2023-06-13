@@ -7,29 +7,41 @@ const { Submission, SubmissionsClientFields } = require('../models/submission')
 const router = Router()
 
 const subTypes = {
-    'sub/pdf': 'pdf'
+    "application/pdf": "pdf"
 }
 const multer = require('multer')
 const crypto = require('node:crypto')
+const fs = require("node:fs/promises")
 
 const upload = multer({
   storage: multer.diskStorage({
-    destination: './uploads',
+    destination: `${__dirname}/uploads`,
     filename: (req, file, callback) => {
-      const filename = crypto.pseudoRandomBytes(16).toString("hex")
-      const extension = subTypes[file.mimetype]
-      callback(null, `${filename}.${extension}`)
+        const filename = crypto.pseudoRandomBytes(16).toString("hex")
+        const extension = subTypes[file.mimetype]
+        callback(null, `${filename}.${extension}`)
     }
   }),
   fileFilter: (req, file, callback) => {
-    callback(null, !!subTypes[file.mimetype])
-  }
+      callback(null, !!subTypes[file.mimetype])
+  },
 }) 
 
 
 // Post a new assignment
-router.post('/', async function (req, res, next) {
+router.post('/', upload.single("file"), async function (req, res, next) {
+  if(req.file && req.body.title && req.body.points && req.body.dueDate){
+    const pdf = {
+      contentType: req.file.mimetype,
+      filename: req.file.filename,
+      path: req.file.path
+    }
     try {
+      // const id = await savePdfFile(pdf)
+      // await fs.unlink(req.file.path)
+      // res.status(200).send({
+      //   id: id
+      // })
       const assignment = await Assignment.create(req.body, AssignmentClientFields)
       res.status(201).send({ id: assignment.id })
     } catch (e) {
@@ -39,6 +51,11 @@ router.post('/', async function (req, res, next) {
         next(e)
       }
     }
+  } else{
+    res.status(400).send({
+      err: "Invalid file"
+    })
+  }
 })
 
 // Get an assignment by ID
