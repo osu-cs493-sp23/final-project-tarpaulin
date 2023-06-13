@@ -12,7 +12,7 @@ const EXCLUDE_USER_ATTRIBUTES_LIST = EXCLUDE_ATTRIBUTES_LIST.concat(["password"]
 
 const { Assignment } = require('../models/assignment')
 const { User } = require("../models/user")
-const { Course, courseSchema, courseClientFields } = require('../models/course')
+const { Course, UserCourse, courseSchema, courseClientFields } = require('../models/course')
 const { requireAuthentication, getRole } = require('../lib/auth.js')
 
 const router = Router()
