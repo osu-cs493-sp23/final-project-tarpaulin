@@ -3,6 +3,7 @@ const { ValidationError } = require('sequelize')
 
 const { Assignment, AssignmentClientFields } = require('../models/assignment')
 const { Submission, SubmissionsClientFields } = require('../models/submission')
+const { requireAuthentication } = require('../lib/auth')
 
 const router = Router()
 
@@ -29,7 +30,12 @@ const upload = multer({
 
 
 // Post a new assignment
-router.post('/', upload.single("file"), async function (req, res, next) {
+/*
+ * Only an authenticated User with 'admin' role or an authenticated 
+ * 'instructor' User whose ID matches the `instructorId` of the Course 
+ * corresponding to the Assignment's `courseId` can create an Assignment.
+ */
+router.post('/', upload.single("file"), requireAuthentication, async function (req, res, next) {
   if(req.file && req.body.title && req.body.points && req.body.dueDate){
     const pdf = {
       contentType: req.file.mimetype,
@@ -74,6 +80,11 @@ router.get('/:assignmentId', async function (req, res, next) {
 })
 
 // Patch an assignment
+/*
+ * Only an authenticated User with 'admin' role or an
+ * authenticated 'instructor' User whose ID matches the `instructorId`
+ * of the Course corresponding to the Assignments `courseId` can update an Assignment.
+ */
 router.patch('/:assignmentId', async function (req, res, next) {
     const assignmentId = req.params.assignmentId
     try {
@@ -97,6 +108,11 @@ router.patch('/:assignmentId', async function (req, res, next) {
 })
 
 // Delete endpoint
+/*
+ * Only an authenticated User with 'admin' role or an
+ * authenticated 'instructor' User whose ID matches the `instructorId`
+ * of the Course corresponding to the Assignments `courseId` can delete an Assignment.
+ */
 router.delete('/:assignmentId', async function (req, res, next) {
     const assignmentId = req.params.assignmentId
     try {
@@ -112,6 +128,13 @@ router.delete('/:assignmentId', async function (req, res, next) {
 })
 
 // Get all submissions for an assignment, paginated, authenticated via instructorId
+/*
+ * Only an authenticated User with 'admin' role or an
+ * authenticated 'instructor' User whose ID matches the `instructorId`
+ * of the Course corresponding to the Assignments `courseId` can fetch the Submissions
+ * for an Assignment.
+ * Code 403: Request was not made by an authenticated User.
+ */
 router.get('/:assignmentId/submissions', async function (req, res, next) {
   const assignmentId = req.params.assignmentId
   try {
@@ -131,6 +154,12 @@ router.get('/:assignmentId/submissions', async function (req, res, next) {
 })
 
 // Post a new submission to an assignment, adds data to database, only student with role in courseId can submit
+/*
+ * Only an authenticated User with 'student' role who is enrolled
+ * in the Course corresponding to the Assignment's `courseId` can
+ * create a Submission.
+ * Code 403: Request was not made by an authenticated User.
+ */
 router.post('/:assignmentId/submissions', upload.single('file'), async function (req, res, next) {
   console.log("  -- req.file:", req.file)
   console.log("  -- req.body:", req.body)

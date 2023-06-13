@@ -43,7 +43,7 @@ router.post('/', requireAuthentication, async function (req, res, next) {
           })
         } else {
           res.status(403).send({
-            error: "The request was not made by an authenticated user."
+            error: "The request was not made by an authenticated User."
           })
         }
       }
@@ -77,7 +77,7 @@ router.post('/login', async function (req, res, next) {
             })
         } else {
             res.status(401).send({
-                error: "Invalid authentication credentials"
+                error: "Invalid authentication credentials."
             })
           }
         }
@@ -87,7 +87,7 @@ router.post('/login', async function (req, res, next) {
       }
   } else {
       res.status(400).send({
-          error: "Request body requires `email` and `password`."
+          error: "The request body was either not present or did not contain all of the required fields."
       })
   }
 
@@ -140,6 +140,16 @@ router.post('/login', async function (req, res, next) {
 
 // Get an user by ID
 // Return user data and a list of classes the user is enrolled in OR a list of classes an instructor is teaching
+/*
+ * If the User has the 'instructor' role, the response should include a list of the 
+ * IDs of the Courses the User teaches (i.e. Courses whose `instructorId` field matches 
+ * the ID of this User).
+ * If the User has the 'student' role, the response should include a list of the IDs of 
+ * the Courses the User is enrolled in.  Only an authenticated User whose ID matches the 
+ * ID of the requested User can fetch this information.
+ * Code 403: Request was not made by an authenticated User.
+ * Code 404: Specified Course `id` not found.
+ */
 router.get('/:userId', async function (req, res, next) {
     const userId = parseInt(req.params.userId)
 

@@ -68,6 +68,9 @@ router.get("/", async function (req, res, next){
 
 
 // Post a new course
+/*
+ *  Only an authenticated User with 'admin' role can create a new Course.
+ */
 router.post('/', requireAuthentication, async function (req, res, next) {
     if (!(req.userRole === "admin")){
 		res.status(403).json({
@@ -106,6 +109,7 @@ router.post('/', requireAuthentication, async function (req, res, next) {
 
 
 // Get an course by ID
+// exclude the list of students enrolled in the course and the list of Assignments for the course.
 router.get('/:courseId', async function (req, res, next) {
     const courseId = req.params.courseId
 
@@ -128,6 +132,13 @@ router.get('/:courseId', async function (req, res, next) {
 })
 
 // Patch an course
+/*
+ * Only an authenticated User with 'admin' role or an
+ * authenticated 'instructor' User whose ID matches the `instructorId`
+ * of the Course can update Course information.
+ * Code 403: Request was not made by an authenticated User.
+ * Code 404: Specified Course `id` not found
+ */
 router.patch('/:courseId', requireAuthentication, async function (req, res, next) {
     if(!containsAtLeastOneSchemaField(req.body, courseSchema)){
         res.status(400).json({
@@ -195,6 +206,10 @@ router.patch('/:courseId', requireAuthentication, async function (req, res, next
 })
 
 // Delete endpoint
+/*
+ * Only an authenticated User with 'admin' role can remove a Course.
+ * Code 403: Request was not made by an authenticated User.
+ */
 router.delete('/:courseId', requireAuthentication, async function (req, res, next) {
     const courseId = req.params.courseId
     if(!(req.userRole === "admin")){
@@ -209,7 +224,10 @@ router.delete('/:courseId', requireAuthentication, async function (req, res, nex
       if (result > 0) {
         res.status(204).send()
       } else {
-        console.log("No such course found")
+        res.status(404).json({
+            error: "Specified Course `id` not found."
+        })
+        // console.log("No such course found")
         next()
       }
     } catch (e) {
@@ -219,6 +237,11 @@ router.delete('/:courseId', requireAuthentication, async function (req, res, nex
 
 
 // Get all students enrolled in a course
+/*
+ * Only an authenticated User with 'admin' role or an
+ * authenticated 'instructor' User whose ID matches the `instructorId`
+ * of the Course can fetch the list of enrolled students.
+ */
 router.get('/:courseId/students', requireAuthentication, async function (req, res, next) {
     const courseId = parseInt(req.params.courseId) || 0
 
@@ -262,6 +285,11 @@ router.get('/:courseId/students', requireAuthentication, async function (req, re
 
 
 // Update enrolled students for a course, takes an object with add and remove arrays
+/*
+ * Only an authenticated User with 'admin' role or an
+ * authenticated 'instructor' User whose ID matches the `instructorId`
+ * of the Course can update the students enrolled in the Course.
+ */
 router.post('/:courseId/students', async function (req, res, next){
     
     var addList = []
@@ -331,6 +359,11 @@ router.post('/:courseId/students', async function (req, res, next){
 
 
 // Unique ID of a Course, fetch a CSV file containing list of students enrolled in the course
+/*
+ * Only an authenticated User with 'admin' role or an
+ * authenticated 'instructor' User whose ID matches the `instructorId`
+ * of the Course can fetch the course roster.
+ */
 router.get('/:courseId/roster', requireAuthentication, async function (req, res, next) {
     const courseId = parseInt(req.params.courseId) || 0
     var course = null
@@ -352,7 +385,7 @@ router.get('/:courseId/roster', requireAuthentication, async function (req, res,
 
 	if (!(req.user.role === "admin" || (req.user.role === "instructor" && req.user.id === course.dataValues.users[0].id))){
 		res.status(403).json({
-			error: "Unauthorized access to specified resource."
+			error: "Request was not made by an authenticated User."
 		})
 		return
 	}

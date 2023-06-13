@@ -42,6 +42,10 @@ router.get('/:fileName', async function (req, res, next) {
 
 
 // Post a new submission
+/*
+ * Only an authenticated User with 'student' role who is enrolled in the
+ * Course corresponding to the Assignment's `courseId` can create a Submission.
+ */
 // router.post('/', async function (req, res, next) {
 //     try {
 //       const submission = await Submission.create(req.body, AssignmentClientFields)
