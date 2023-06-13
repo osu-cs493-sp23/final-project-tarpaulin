@@ -5,7 +5,7 @@ const { Readable } = require("node:stream")
 
 //Helpers
 const { generateHATEOASlinks, getOnly} = require("../lib/pagination.js")
-const { validateAgainstSchema } = require("../lib/validation.js")
+const { validateAgainstSchema, containsAtLeastOneSchemaField } = require("../lib/validation.js")
 const { generateRosterCSV } = require("../lib/csv.js")
 const EXCLUDE_ATTRIBUTES_LIST = ["createdAt", "updatedAt"]
 const EXCLUDE_USER_ATTRIBUTES_LIST = EXCLUDE_ATTRIBUTES_LIST.concat(["password"])
@@ -128,31 +128,82 @@ router.get('/:courseId', async function (req, res, next) {
 })
 
 // Patch an course
-// router.patch('/:courseId', async function (req, res, next) {
-//     const assignmentId = req.params.assignmentId
-//     try {
-//       /*
-//        * Update course without allowing client to update businessId or userId.
-//        */
-//       const result = await Course.update(req.body, {
-//         where: { id: assignmentId },
-//         fields: AssignmentClientFields.filter(
-//           field => field !== 'coursesId' && field !== 'userId' && field !== 'submissionsId'
-//         )
-//       })
-//       if (result[0] > 0) {
-//         res.status(204).send()
-//       } else {
-//         next()
-//       }
-//     } catch (e) {
-//       next(e)
-//     }
-// })
+router.patch('/:courseId', requireAuthentication, async function (req, res, next) {
+    if(!containsAtLeastOneSchemaField(req.body, courseSchema)){
+        res.status(400).json({
+            error: "Invalid request body"
+        })
+        return
+    }
+
+    const courseId = parseInt(req.params.courseId) || 0
+
+    var course = null
+    try {
+        course = await Course.findByPk(courseId, {
+            attributes: {exclude: EXCLUDE_ATTRIBUTES_LIST},
+            include: includeInstructorInResult()
+        })
+    } catch (err){
+        next(err)
+        return
+    }
+    if(!course){
+        next()
+        return
+    }
+    if(!(req.user.role === "admin" || (req.user.role === "instructor" && req.userId === match.dataValues.user[0].id))){
+        res.status(403).json({
+            error: "Unauthorized access to specified resource"
+        })
+        return
+    }
+
+    var isUpdated = false
+    if(req.body.instructorId){
+        try{
+            isUpdated = await course.removeUser(course.dataValues.users[0].id)
+            await course.addUser(req.body.instructorId)
+        } catch (err){
+            next(err)
+            return
+        }
+        isUpdated = true
+    }
+
+    var updateResult = null
+    try{
+        updateResult = await Course.update(req.body, {where: {id: courseId}, fields: {courseClientFields}})
+    } catch (err){
+        if (err instanceof ValidationError){
+            res.status(400).json({
+                error: "Invalid request body"
+            })
+        }
+        return
+    }
+
+    if(updateResult[0] > 0){
+        isUpdated = true
+    }
+
+    if(isUpdated){
+        res.status(200).send()
+    } else {
+        next()
+    }
+})
 
 // Delete endpoint
-router.delete('/:courseId', async function (req, res, next) {
+router.delete('/:courseId', requireAuthentication, async function (req, res, next) {
     const courseId = req.params.courseId
+    if(!(req.user.role === "admin")){
+        res.status(403).json({
+            error: "Unauthorized access to specified rseource"
+        })
+        return
+    }
+    
     try {
       const result = await Course.destroy({ where: { id: courseId }})
       if (result > 0) {

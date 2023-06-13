@@ -1,32 +1,32 @@
 [
     {
         "courseId": 1,
-        "title": "title 1",
+        "title": "HW1",
         "dueDate": "4/4/23",
-        "points": 79
+        "points": 100
     },
     {
         "courseId": 2,
-        "title": "title 2",
-        "dueDate": "4/4/23",
-        "points": 23
+        "title": "HW2",
+        "dueDate": "4/7/23",
+        "points": 50
     },
     {
         "courseId": 3,
-        "title": "title 3",
-        "dueDate": "4/4/23",
-        "points": 56
+        "title": "HW3",
+        "dueDate": "4/12/23",
+        "points": 50
     },
     {
         "courseId": 4,
-        "title": "title 4",
-        "dueDate": "4/4/23",
-        "points": 33
+        "title": "HW4",
+        "dueDate": "4/18/23",
+        "points": 30
     },
     {
         "courseId": 5,
-        "title": "title 5",
-        "dueDate": "4/4/23",
-        "points": 64
+        "title": "HW5",
+        "dueDate": "4/22/23",
+        "points": 60
     }
 ]
