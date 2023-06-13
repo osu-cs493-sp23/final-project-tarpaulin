@@ -104,8 +104,8 @@ router.post('/', requireAuthentication, async function (req, res, next) {
     }
     res.status(201).json({id: course.id})  
 
-})    
-    
+})
+
 
 
 // Get an course by ID
