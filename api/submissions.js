@@ -3,19 +3,35 @@ const path = require('path')
 // const { ValidationError } = require('sequelize')
 // const { Assignment } = require('../models/assignment')
 // const { Course } = require('../models/course')
-// const { Submission } = require('../models/submission')
+const { Submission } = require('../models/submission')
 // const { User } = require('../models/user')
 const router = Router()
 
 
 router.get('/:fileName', async function (req, res, next) {
 	try {
-		const filePath = path.join(__dirname, 'uploads', req.params.fileName)
-		console.log(" -- filePath", filePath)
-		res.sendFile(filePath)
-	} catch (e) {
-		next(e)
+		const id = parseInt(req.params.id)
+		const submission = await Submission.findByPk(id)
+		if(!submission){
+			res.status(404).json({
+				error: "Submission not found"
+			})
+		}
+		path = path.join(__dirname, 'uploads', id)
+		res.sendFile(submission.path)
+	} catch (error){
+		res.status(500).json({
+			error: "Server error. Failed to retrieve PDF"
+		})
 	}
+
+
+	// 	const filePath = path.join(__dirname, 'uploads', req.params.fileName)
+	// 	console.log(" -- filePath", filePath)
+	// 	res.sendFile(filePath)
+	// } catch (e) {
+	// 	next(e)
+	// }
 })
 
 
