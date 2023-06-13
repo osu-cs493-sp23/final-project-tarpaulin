@@ -6,7 +6,14 @@ const router = Router()
 
 const { generateAuthToken, requireAuthentication, getRole } = require("../lib/auth")
 const { validateAgainstSchema } = require('../lib/validation')
-const { rateLimit } = require('../lib/rate_limiting')
+// const { rateLimit2 } = require('../lib/rate_limiting')
+const { limiter, authLimiter } = require('../lib/limiter')
+
+const express = require('express')
+// const router = express.Router()
+const app = express()
+// app.use(limiter)
+const rateLimit = require('express-rate-limit')
 
 
 // Post a new user, only admins can create admin and instructors
@@ -118,6 +125,8 @@ router.post('/login', async function (req, res, next) {
 //     }
 // })
 
+// app.use(limiter)
+
 
 // Get an user by ID
 // Return user data and a list of classes the user is enrolled in OR a list of classes an instructor is teaching
@@ -163,6 +172,35 @@ async function getUserCourses(user){                // findall parameters likely
 }
 
 
+//////////// TESTING ///////////////
+
+// router.get("/:userId", requireAuthentication, authLimiter, (req, res, next) => {
+//   const userId = req.params.userId
+
+//   try {
+//     console.log(req.userRole)
+
+//     if (req.userRole == "admin" || req.params.userId == req.userId) {
+//       const user = User.findByPk(userId)
+//       user.then(function(result) {
+//         res.status(200).send(result)
+//       })
+//     } else {
+//       res.status(404).send({
+//         error: "Cannot access resource."
+//       })
+//     }
+//   } catch (e) {
+//     next(e)
+//   }
+// })
+
+// router.use(limiter)
+
+
+
+
+/////////////////////////////
 
 
 
