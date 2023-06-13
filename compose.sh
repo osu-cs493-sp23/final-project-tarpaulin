@@ -17,4 +17,4 @@ docker run -d --name tarpaulin  -p "3306:3306" -e "MYSQL_ROOT_PASSWORD=squid" -e
 docker run -d --name redis-server  -p 6379:6379  redis:latest
 
 # run server
-# npm run dev
+npm run dev
