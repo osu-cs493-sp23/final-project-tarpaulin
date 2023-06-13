@@ -179,6 +179,11 @@ router.get('/:userId', async function (req, res, next) {
 
 async function getUserCourses(user, userId){                // findall parameters likely need to be adjusted
   role = user.role
+  var courseList = {
+    data: [],
+    status: 200
+  }
+
   if(role === "student"){
     courses = await Course.findAll({
       include:{
@@ -194,7 +199,7 @@ async function getUserCourses(user, userId){                // findall parameter
         include: {
           model: User,
           as: "users",
-          where: {id: instructorId},
+          where: {id: userId},
           through: {attributes: []},
           attributes: {exclude: EXCLUDE_ATTRIBUTES_LIST}
         }
@@ -204,9 +209,18 @@ async function getUserCourses(user, userId){                // findall parameter
     return null
   }
 
-  // console.log(courses)
 
-  return courses
+	courses.forEach(course => {
+		courseList.data.push({
+			...course.dataValues,
+			students: undefined
+		})
+	})
+	courseList.status = 200
+
+  console.log(courseList)
+
+  return courseList
 }
 
 
