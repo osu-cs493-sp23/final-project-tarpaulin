@@ -1,4 +1,5 @@
 const { Router } = require('express')
+const path = require('path')
 // const { ValidationError } = require('sequelize')
 // const { Assignment } = require('../models/assignment')
 // const { Course } = require('../models/course')
@@ -6,6 +7,16 @@ const { Router } = require('express')
 // const { User } = require('../models/user')
 const router = Router()
 
+
+router.get('/:fileName', async function (req, res, next) {
+	try {
+		const filePath = path.join(__dirname, 'uploads', req.params.fileName)
+		console.log(" -- filePath", filePath)
+		res.sendFile(filePath)
+	} catch (e) {
+		next(e)
+	}
+})
 
 
 // Routes for debugging purposes only
