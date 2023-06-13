@@ -19,7 +19,7 @@ const userData = require('./data/users.json')
 
 sequelize.sync({ force: true}).then(async function () {
   await Assignment.bulkCreate(assignmentsData, { fields: AssignmentsClientFields })
-  // await Course.bulkCreate(coursesData, { fields: CoursesClientFields })
+  await Course.bulkCreate(coursesData, { fields: CoursesClientFields })
   await Submission.bulkCreate(submissionData, { fields: SubmissionsClientFields })
   await User.bulkCreate(userData, { fields: UserClientFields })
 })
