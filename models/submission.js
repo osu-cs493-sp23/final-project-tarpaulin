@@ -7,10 +7,16 @@ const sequelize = require('../lib/sequelize')
 const Submission = sequelize.define('submission', {
   assignmentId: {type: DataTypes.INTEGER, allowNull: false},
   studentId: {type: DataTypes.INTEGER, allowNull: false},
-  time: { type: DataTypes.DATE, allowNull: false},
+  dueDate: { type: DataTypes.DATE, allowNull: false},
   grade: { type: DataTypes.FLOAT, allowNull: false },
-  file: { type: DataTypes.STRING, allowNull: false }
+  path: { type: DataTypes.STRING, allowNull: false }
 })
 
 
 exports.Submission = Submission
+
+exports.SubmissionClientFields = [
+  'assignmentId',
+  'time',
+  'grade'
+]

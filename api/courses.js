@@ -10,10 +10,6 @@ const { generateRosterCSV } = require("../lib/csv.js")
 const EXCLUDE_ATTRIBUTES_LIST = ["createdAt", "updatedAt"]
 const EXCLUDE_USER_ATTRIBUTES_LIST = EXCLUDE_ATTRIBUTES_LIST.concat(["password"])
 
-
-
-
-
 const { Assignment } = require('../models/assignment')
 const { User } = require("../models/user")
 const { Course, courseSchema, courseClientFields } = require('../models/course')
