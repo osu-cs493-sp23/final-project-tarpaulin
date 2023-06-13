@@ -4,6 +4,8 @@ const morgan = require('morgan');
 const api = require('./api');
 const sequelize = require('./lib/sequelize')
 const { rateLimit } = require('./lib/rate_limiting')
+const { limiter } = require('./lib/limiter')
+
 
 const app = express();
 const port = process.env.PORT || 8000;
@@ -17,7 +19,8 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // Rate limiting
-app.use('/', rateLimit)
+// app.use(rateLimit)
+// app.use(limiter)
 
 /*
  * All routes for the API are written in modules in the api/ directory.  The
@@ -25,6 +28,7 @@ app.use('/', rateLimit)
  * it provides all of the routes.
  */
 app.use('/', api);
+
 
 app.use('*', function (req, res, next) {
   res.status(404).json({
@@ -43,8 +47,10 @@ app.use('*', function (err, req, res, next) {
   })
 })
 
+
 sequelize.sync().then(function () {
   app.listen(port, function() {
     console.log("== SERVER is running on port", port);
   });
 })
+
