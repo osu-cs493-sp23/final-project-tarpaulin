@@ -19,7 +19,7 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // Rate limiting
-// app.use(rateLimit)
+app.use(rateLimit)
 // app.use(limiter)
 
 /*
