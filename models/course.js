@@ -12,7 +12,7 @@ const fields = {
     subject: { type: DataTypes.STRING, allowNull: false, unique: false },
     title: { type: DataTypes.STRING, allowNull: false, unique: false },
     term: { type: DataTypes.STRING, allowNull: false, unique: false}
-    // instructorId: { type: DataTypes.INTEGER, allowNull: false},
+    // instructorId: { type: DataTypes.INTEGER, allowNull: false}
 }
 
 const Course = sequelize.define('course', fields, {

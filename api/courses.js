@@ -261,7 +261,6 @@ router.get('/:courseId/students', requireAuthentication, async function (req, re
         next()
         return
     }
-    // console.log("Course found")
 
     if(!(req.userRole === "admin" || (req.userRole === "instructor" && req.user.id === course.dataValues.users[0].id))){
         res.status(403).json({

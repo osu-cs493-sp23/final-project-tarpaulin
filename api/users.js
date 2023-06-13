@@ -9,6 +9,8 @@ const { generateAuthToken, requireAuthentication, getRole } = require("../lib/au
 const { validateAgainstSchema } = require('../lib/validation')
 
 
+EXCLUDE_ATTRIBUTES_LIST = ["createdAt", "updatedAt"]
+
 // Create the first admin, debug only
 router.post('/createAdmin', async function(req, res, next){
     try{
@@ -156,12 +158,13 @@ router.get('/:userId', async function (req, res, next) {
     try {
       const user = await User.findByPk(userId)
       if (user) {
-        courses = getUserCourses(user, userId)
+        coursesList = getUserCourses(user, userId)
+        console.log(coursesList)
         res.status(200).send({
           username: user.name,
           email: user.email,
           role: user.role,
-          courses: courses
+          courses: coursesList
         })
       } else {
         console.log("User does not exist")
@@ -176,19 +179,33 @@ router.get('/:userId', async function (req, res, next) {
 
 async function getUserCourses(user, userId){                // findall parameters likely need to be adjusted
   role = user.role
-  
   if(role === "student"){
-    courses = await UserCourse.findAll({
-      where: ({userId: userId})
+    courses = await Course.findAll({
+      include:{
+        model: User,
+        as: "users",
+        where: ({id: userId}),
+        through: {attributes: []},
+        attributes: {exclude: EXCLUDE_ATTRIBUTES_LIST}
+      }
     })
   } else if(role === "instructor"){
-    courses = await UserCourse.findAll({
-      where: ({userId: userId})
-    })
+      courses = await Course.findAll({
+        include: {
+          model: User,
+          as: "users",
+          where: {id: instructorId},
+          through: {attributes: []},
+          attributes: {exclude: EXCLUDE_ATTRIBUTES_LIST}
+        }
+      })
   } else{
     courses = []
     return null
   }
+
+  // console.log(courses)
+
   return courses
 }
 
