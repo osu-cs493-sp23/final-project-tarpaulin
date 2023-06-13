@@ -17,6 +17,7 @@ const EXCLUDE_USER_ATTRIBUTES_LIST = EXCLUDE_ATTRIBUTES_LIST.concat(["password"]
 const { Assignment } = require('../models/assignment')
 const { User } = require("../models/user")
 const { Course, courseSchema, courseClientFields } = require('../models/course')
+const { requireAuthentication, getRole } = require('../lib/auth.js')
 
 const router = Router()
 
@@ -71,12 +72,13 @@ router.get("/", async function (req, res, next){
 
 
 // Post a new course
-router.post('/', async function (req, res, next) {
-    // if(!(req.user.role === "admin")){
-    //     res.status(403).json({
-    //         error: "The request was not made by an authenticated User satisfying the authorization criteria"
-    //     })
-    // }
+router.post('/', requireAuthentication, async function (req, res, next) {
+    if (!(req.userRole === "admin")){
+		res.status(403).json({
+			error: "Unauthorized access to specified resource."
+		})
+		return
+	}
 
     var newCourse = req.body
     if(!validateAgainstSchema(newCourse, courseSchema)){
@@ -86,6 +88,7 @@ router.post('/', async function (req, res, next) {
         return
     }
 
+    console.log("Validation of schema successful")
     var course = {}
     try {
         course = await Course.create(newCourse, courseClientFields)

@@ -1,6 +1,7 @@
 const { Router, application } = require('express')
 const { ValidationError } = require('sequelize')
 
+const { Course, UserCourse } = require('../models/course')
 const { User, UserClientFields, validateUser, getUserByEmail2 } = require('../models/user')
 const router = Router()
 
@@ -16,23 +17,38 @@ const app = express()
 const rateLimit = require('express-rate-limit')
 
 
+// Create the first admin, debug only
+router.post('/createAdmin', async function(req, res, next){
+    try{
+      const user = await User.create(req.body, UserClientFields)
+      res.status(201).send({
+        id: user.id
+      })
+    } catch (e){
+      next(e)
+    }
+})
+
+
+
 // Post a new user, only admins can create admin and instructors
-router.post('/', async function (req, res, next) {
+router.post('/', requireAuthentication, async function (req, res, next) {
     try {
       // const user = await User.create(req.body, UserClientFields)
       // res.status(201).send({ id: user.id })
 
 
-      if (req.userRole == "admin") {
+
+      if (req.userRole === "admin") {
         const user = await User.create(req.body, UserClientFields)
         res.status(201).send({
-          _id: user.id
+          id: user.id
         })
       } else {
         if (req.body.role != "admin" && req.body.role != "instructor") {
           const user = await User.create(req.body)
           res.status(201).send({
-            _id: user.id
+            id: user.id
           })
         } else {
           res.status(403).send({
@@ -87,6 +103,9 @@ router.post('/login', async function (req, res, next) {
 })
 
 
+
+
+
 // Patch a user, admin only
 // router.patch('/:userId', async function (req, res, next) {
 //     const userId = req.params.userId
@@ -136,7 +155,7 @@ router.get('/:userId', async function (req, res, next) {
     try {
       const user = await User.findByPk(userId)
       if (user) {
-        courses = getUserCourses(user)
+        courses = getUserCourses(user, userId)
         res.status(200).send({
           username: user.name,
           email: user.email,
@@ -154,18 +173,19 @@ router.get('/:userId', async function (req, res, next) {
 
 
 
-async function getUserCourses(user){                // findall parameters likely need to be adjusted
+async function getUserCourses(user, userId){                // findall parameters likely need to be adjusted
   role = user.role
   
   if(role === "student"){
-    courses = Course.findAll({
-      where: ({id: userId})
+    courses = await UserCourse.findAll({
+      where: ({userId: userId})
     })
   } else if(role === "instructor"){
-    courses = Course.findAll({
-      where: ({id: userId})
+    courses = await UserCourse.findAll({
+      where: ({userId: userId})
     })
   } else{
+    courses = []
     return null
   }
   return courses
