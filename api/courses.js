@@ -12,7 +12,7 @@ const EXCLUDE_USER_ATTRIBUTES_LIST = EXCLUDE_ATTRIBUTES_LIST.concat(["password"]
 
 const { Assignment } = require('../models/assignment')
 const { User } = require("../models/user")
-const { Course, UserCourse, courseSchema, courseClientFields } = require('../models/course')
+const { Course, courseSchema, courseClientFields } = require('../models/course')
 const { requireAuthentication, getRole } = require('../lib/auth.js')
 
 const router = Router()
@@ -261,7 +261,6 @@ router.get('/:courseId/students', requireAuthentication, async function (req, re
         next()
         return
     }
-    // console.log("Course found")
 
     if(!(req.userRole === "admin" || (req.userRole === "instructor" && req.user.id === course.dataValues.users[0].id))){
         res.status(403).json({
@@ -296,7 +295,6 @@ router.get('/:courseId/students', requireAuthentication, async function (req, re
  * of the Course can update the students enrolled in the Course.
  */
 router.post('/:courseId/students', async function (req, res, next){
-
     const course = await Course.findByPk(req.params.courseId)
     console.log(" -- course: ", course)
 
