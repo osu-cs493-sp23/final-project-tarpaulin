@@ -10,30 +10,13 @@ const router = Router()
 
 router.get('/:fileName', async function (req, res, next) {
 	try {
-		const id = parseInt(req.params.id)
-		const submission = await Submission.findByPk(id)
-		if(!submission){
-			res.status(404).json({
-				error: "Submission not found"
-			})
+			const filePath = path.join(__dirname, 'uploads', req.params.fileName)
+			console.log(" -- filePath", filePath)
+			res.sendFile(filePath)
+		} catch (e) {
+			next(e)
 		}
-		path = path.join(__dirname, 'uploads', id)
-		res.sendFile(submission.path)
-	} catch (error){
-		res.status(500).json({
-			error: "Server error. Failed to retrieve PDF"
-		})
-	}
-
-
-	// 	const filePath = path.join(__dirname, 'uploads', req.params.fileName)
-	// 	console.log(" -- filePath", filePath)
-	// 	res.sendFile(filePath)
-	// } catch (e) {
-	// 	next(e)
-	// }
-})
-
+	})
 
 // Routes for debugging purposes only
 // Please note that submissions are all dependent on other endpoints, and should not be accessed seperately
