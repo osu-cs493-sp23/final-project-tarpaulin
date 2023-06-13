@@ -55,7 +55,7 @@ router.get("/", async function (req, res, next){
     }
     resultsPage = []
     result.rows.forEach((course) => {
-        resultsPage.push(courseResponseFormSequelizeModel(course))
+        resultsPage.push(courseFromSeq(course))
     })
 
     var lastPage = Math.ceil(result.count / coursesPerPage)
@@ -363,6 +363,13 @@ async function getCourseStudentsList(courseId){
 	return rosterObj
 }
 
+function courseFromSeq(model){
+    return{
+        ...model.dataValues,
+        users: undefined,
+        instructorId: model.dataValues.users[0].id
+    }
+}
 
 
 
