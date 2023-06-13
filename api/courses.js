@@ -247,18 +247,21 @@ router.get('/:courseId/students', requireAuthentication, async function (req, re
 
     var course = null
     try{
-        course = await Course.findByPk(courseId, {
-            attributes: {exclude: EXCLUDE_ATTRIBUTES_LIST},
-            include: includeInstructorInResult()
-        })
+        // course = await Course.findByPk(courseId, {
+        //     attributes: {exclude: EXCLUDE_ATTRIBUTES_LIST},
+        //     include: includeInstructorInResult()
+        // })
+        course = await Course.findByPk(courseId)
     } catch (err){
         console.log("Course not found")
         next(err)
     }
+
     if(!course){
         next()
         return
     }
+    // console.log("Course found")
 
     if(!(req.userRole === "admin" || (req.userRole === "instructor" && req.user.id === course.dataValues.users[0].id))){
         res.status(403).json({
@@ -268,6 +271,8 @@ router.get('/:courseId/students', requireAuthentication, async function (req, re
     }
 
     const courseRoster = await getCourseStudentsList(courseId)
+    // console.log("Found roster")
+    // console.log(courseRoster)
 
     if (courseRoster.status !== 200){
         var errStr = undefined
@@ -299,27 +304,37 @@ router.post('/:courseId/students', async function (req, res, next){
             error: "Invalid request body or no valid studentIds for specified course"
         })
         return
+    } 
+    if (req.body.add){
+        addList = req.body.add
+    } 
+    if (req.body.remove){
+        removeList = req.body.remove
     }
 
     const courseId = parseInt(req.params.courseId) || 0
 
     var course = null
     try{
-        course = await Course.findByPk(courseId, {
-            attributes: {exlcude: EXCLUDE_ATTRIBUTES_LIST},
-            include: includeInstructorInResult()
-        })
+        // course = await Course.findByPk(courseId, {
+        //     attributes: {exclude: EXCLUDE_ATTRIBUTES_LIST},
+        //     include: includeInstructorInResult()
+        // })
+        course = await Course.findByPk(courseId)
     } catch (err){
         next(err)
         return
     }
+
 
     if(!course){
         next()
         return
     }
 
-    if (!(req.user.role === "admin" || (req.user.role === "instructor" && req.user.id === course.dataValues.users[0].id))){
+
+
+    if (!(req.userRole === "admin" || (req.userRole === "instructor" && req.user.id === course.dataValues.users[0].id))){
 		res.status(403).json({
 			error: "Unauthorized access to specified resource."
 		})
@@ -329,6 +344,7 @@ router.post('/:courseId/students', async function (req, res, next){
     var response = {}
     var addFailed = []
     var removeFailed = []
+    console.log(addList)
     if(addList.length > 0){
         addList.forEach(async studentId => {
             try{
@@ -465,9 +481,10 @@ async function getCourseStudentsList(courseId){
 		status: 200
 	}
 	
+    
 	//check first if the requested course exists
 	try {
-		if (!courseExistsInDb(courseId)){
+		if (!courseExists(courseId)){
 			rosterObj.status = 404
 			return rosterObj
 		}
@@ -516,7 +533,9 @@ function courseFromSeq(model){
     }
 }
 
-
+async function courseExists(courseId){
+    return !!await Course.findByPk(courseId)
+}
 
 
 module.exports = router
