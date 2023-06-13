@@ -197,7 +197,7 @@ router.patch('/:courseId', requireAuthentication, async function (req, res, next
 // Delete endpoint
 router.delete('/:courseId', requireAuthentication, async function (req, res, next) {
     const courseId = req.params.courseId
-    if(!(req.user.role === "admin")){
+    if(!(req.userRole === "admin")){
         res.status(403).json({
             error: "Unauthorized access to specified rseource"
         })
@@ -219,14 +219,14 @@ router.delete('/:courseId', requireAuthentication, async function (req, res, nex
 
 
 // Get all students enrolled in a course
-router.get('/:courseId/students', async function (req, res, next) {
+router.get('/:courseId/students', requireAuthentication, async function (req, res, next) {
     const courseId = parseInt(req.params.courseId) || 0
 
     var course = null
     try{
         course = await Course.findByPk(courseId, {
             attributes: {exclude: EXCLUDE_ATTRIBUTES_LIST},
-            include: includeInstructorInResult
+            include: includeInstructorInResult()
         })
     } catch (err){
         console.log("Course not found")
@@ -237,7 +237,7 @@ router.get('/:courseId/students', async function (req, res, next) {
         return
     }
 
-    if(!(req.user.role === "admin" || (req.user.role === "instructor" && req.user.id === course.dataValues.users[0].id))){
+    if(!(req.userRole === "admin" || (req.userRole === "instructor" && req.user.id === course.dataValues.users[0].id))){
         res.status(403).json({
             error: "Unauthorized access to specified resource"
         })
@@ -262,14 +262,77 @@ router.get('/:courseId/students', async function (req, res, next) {
 
 
 // Update enrolled students for a course, takes an object with add and remove arrays
-// router.post('/:courseId/students', async function (req, res, next){
-// })
+router.post('/:courseId/students', async function (req, res, next){
+    
+    var addList = []
+    var removeList = []
+    if(!(req.body && (req.body.add || req.body.remove))){
+        res.status(400).json({
+            error: "Invalid request body or no valid studentIds for specified course"
+        })
+        return
+    }
+
+    const courseId = parseInt(req.params.courseId) || 0
+
+    var course = null
+    try{
+        course = await Course.findByPk(courseId, {
+            attributes: {exlcude: EXCLUDE_ATTRIBUTES_LIST},
+            include: includeInstructorInResult()
+        })
+    } catch (err){
+        next(err)
+        return
+    }
+
+    if(!course){
+        next()
+        return
+    }
+
+    if (!(req.user.role === "admin" || (req.user.role === "instructor" && req.user.id === course.dataValues.users[0].id))){
+		res.status(403).json({
+			error: "Unauthorized access to specified resource."
+		})
+		return
+	}
+    
+    var response = {}
+    var addFailed = []
+    var removeFailed = []
+    if(addList.length > 0){
+        addList.forEach(async studentId => {
+            try{
+                await course.addUser(studentId)
+            } catch (err){
+                addFailed.push(studentId)
+            }
+        })
+        if(addFailed.length > 0){
+            response["not_added"] = addFailed
+        }
+    }
+
+    if(removeList.length > 0){
+        removeList.forEach(async studentId=> {
+            try{
+                await course.removeUser(studentId)
+            } catch (err){
+                removeFailed.push(studentId)
+            }
+        })
+        if(removeFailed.length > 0){
+            response["not_removed"] = removeFailed
+        }
+    }
+    res.status(201).json(response)
+})
 
 
 // Unique ID of a Course, fetch a CSV file containing list of students enrolled in the course
-router.get('/:courseId/roster', async function (req, res, next) {
+router.get('/:courseId/roster', requireAuthentication, async function (req, res, next) {
     const courseId = parseInt(req.params.courseId) || 0
-
     var course = null
 	try {
 		course = await Course.findByPk(courseId, {
@@ -286,6 +349,7 @@ router.get('/:courseId/roster', async function (req, res, next) {
 		return
 	}
 
+
 	if (!(req.user.role === "admin" || (req.user.role === "instructor" && req.user.id === course.dataValues.users[0].id))){
 		res.status(403).json({
 			error: "Unauthorized access to specified resource."
@@ -294,6 +358,7 @@ router.get('/:courseId/roster', async function (req, res, next) {
 	}
 
 	const courseRosterObj = await getCourseStudentsList(courseId)
+    
 
 	if (courseRosterObj.status !== 200){
 		var errStr = undefined
