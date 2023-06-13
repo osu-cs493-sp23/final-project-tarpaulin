@@ -7,14 +7,6 @@ const router = Router()
 
 const { generateAuthToken, requireAuthentication, getRole } = require("../lib/auth")
 const { validateAgainstSchema } = require('../lib/validation')
-// const { rateLimit2 } = require('../lib/rate_limiting')
-const { limiter, authLimiter } = require('../lib/limiter')
-
-const express = require('express')
-// const router = express.Router()
-const app = express()
-// app.use(limiter)
-const rateLimit = require('express-rate-limit')
 
 
 // Create the first admin, debug only
