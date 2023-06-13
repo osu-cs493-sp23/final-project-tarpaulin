@@ -24,12 +24,11 @@ router.post('/createAdmin', async function(req, res, next){
 
 
 // Post a new user, only admins can create admin and instructors
+// This route currently cant make 'student' accounts without a token
 router.post('/', requireAuthentication, async function (req, res, next) {
     try {
       // const user = await User.create(req.body, UserClientFields)
       // res.status(201).send({ id: user.id })
-
-
 
       if (req.userRole === "admin") {
         const user = await User.create(req.body, UserClientFields)
