@@ -7,6 +7,8 @@ const { Course } = require('../models/course')
 const { User } = require("../models/user")
 // const { includeInstructorInResult } = require("../api/courses")
 const { requireAuthentication } = require('../lib/auth')
+const { generateHATEOASlinks, getOnly} = require("../lib/pagination.js")
+
 const EXCLUDE_ATTRIBUTES_LIST = ["createdAt", "updatedAt"]
 const EXCLUDE_USER_ATTRIBUTES_LIST = EXCLUDE_ATTRIBUTES_LIST.concat(["password"])
 
@@ -171,28 +173,47 @@ router.delete('/:assignmentId', async function (req, res, next) {
  * for an Assignment.
  * Code 403: Request was not made by an authenticated User.
  */
-router.get('/:assignmentId/submissions', async function (req, res, next) {
+router.get('/:assignmentId/submissions', requireAuthentication, async function (req, res, next) {
+  const submissionsPerPage = 10
   const assignmentId = req.params.assignmentId
+
+  var page = parseInt(req.query.page) || 1
+  page = page < 1 ? 1 : page
+  var offset = (page - 1) * submissionsPerPage
+
+  var queryParams = getOnly(req.query, [
+    "assignmentId", "studentId", "dueDate", "grade", "fileName"
+  ])
+  var result = null
   try {
-    const submissions = await Submission.findAll({
+    result = await Submission.findAndCountAll({
       where: {
-        assignmentId: assignmentId
-      }
+        assignmentId: assignmentId,
+      },
+      limit: submissionsPerPage,
+      offset: offset
     })
-    if (submissions) {
-      res.status(200).send(submissions)
-    } else {
-      next()
-    }
   } catch (e) {
     next(e)
-  }
-  if(!(req.user.role === "admin" || (req.user.role === "instructor" && req.userId === match.dataValues.user[0].id))){
-    res.status(403).json({
-        error: "Unauthorized access to specified resource"
-    })
     return
-}
+  }
+
+  resultsPage = []
+  result.rows.forEach((submission) => {
+    resultsPage.push(submission)
+  })
+
+  var lastPage = Math.ceil(result.count / submissionsPerPage)
+  res.status(200).json({
+    submissions: resultsPage,
+    links: generateHATEOASlinks(
+      req.originalUrl.split("?")[0],
+      page,
+      lastPage,
+      queryParams
+    )
+  })
+
 })
 
 // Post a new submission to an assignment, adds data to database, only student with role in courseId can submit
@@ -202,7 +223,7 @@ router.get('/:assignmentId/submissions', async function (req, res, next) {
  * create a Submission.
  * Code 403: Request was not made by an authenticated User.
  */
-router.post('/:assignmentId/submissions', upload.single('file'), async function (req, res, next) {
+router.post('/:assignmentId/submissions', requireAuthentication, upload.single('file'), async function (req, res, next) {
   console.log("  -- req.file:", req.file)
   console.log("  -- req.body:", req.body)
   if (req.file &&
@@ -232,12 +253,6 @@ router.post('/:assignmentId/submissions', upload.single('file'), async function 
         err: "Invalid file"
     })
   }
-  if(!(req.user.role === "admin" || (req.user.role === "instructor" && req.userId === match.dataValues.user[0].id))){
-    res.status(403).json({
-        error: "Unauthorized access to specified resource"
-    })
-    return
-}
 })
 
 
