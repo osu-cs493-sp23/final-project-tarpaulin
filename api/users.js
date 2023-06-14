@@ -83,8 +83,7 @@ router.post('/login', async function (req, res, next) {
                 error: "Invalid authentication credentials."
             })
         }
-        
-          
+
       } catch (e) {
           next(e)
       }
@@ -138,8 +137,6 @@ router.post('/login', async function (req, res, next) {
 //     }
 // })
 
-// app.use(limiter)
-
 
 // Get an user by ID
 // Return user data and a list of classes the user is enrolled in OR a list of classes an instructor is teaching
@@ -176,7 +173,7 @@ router.get('/:userId', requireAuthentication ,async function (req, res, next) {
           courses: coursesList.data
         })
       }
-      
+
     } catch (e) {
       next(e)
     }

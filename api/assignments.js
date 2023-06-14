@@ -45,11 +45,11 @@ const upload = multer({
  */
 router.post('/', upload.single("file"), requireAuthentication, async function (req, res, next) {
   if(req.file && req.body.title && req.body.points && req.body.dueDate){
-    const pdf = {
-      contentType: req.file.mimetype,
-      filename: req.file.filename,
-      path: req.file.path
-    }
+    // const pdf = {
+    //   contentType: req.file.mimetype,
+    //   filename: req.file.filename,
+    //   path: req.file.path
+    // }
     try {
       // const id = await savePdfFile(pdf)
       // await fs.unlink(req.file.path)
@@ -57,7 +57,24 @@ router.post('/', upload.single("file"), requireAuthentication, async function (r
       //   id: id
       // })
       const assignment = await Assignment.create(req.body, AssignmentClientFields)
-      res.status(201).send({ id: assignment.id, test: testResult.id })
+
+      const assignment2 = await Assignment.findByPk(assignment.id)
+      const courseIdFromAssignment = assignment2.courseId
+      const course = await Course.findByPk(courseIdFromAssignment, {
+        attributes: {exclude: EXCLUDE_ATTRIBUTES_LIST},
+        include: includeInstructorInResult()
+      })
+      const instructorId = course.dataValues.users[0].id
+      // console.log(instructorId)
+
+      if(!(req.userRole === "admin" || (req.userRole === "instructor" && req.userId === instructorId))){
+        res.status(403).json({
+            error: "Unauthorized access to specified resource"
+        })
+      } else {
+        res.status(201).send({ id: assignment.id })
+      }
+
     } catch (e) {
       if (e instanceof ValidationError) {
         res.status(400).send({ error: e.message })
@@ -65,12 +82,7 @@ router.post('/', upload.single("file"), requireAuthentication, async function (r
         next(e)
       }
     }
-    if(!(req.user.role === "admin" || (req.user.role === "instructor" && req.userId === match.dataValues.user[0].id))){
-      res.status(403).json({
-          error: "Unauthorized access to specified resource"
-      })
-      return
-  }
+
   } else{
     res.status(400).send({
       err: "Invalid file"
@@ -99,42 +111,45 @@ router.get('/:assignmentId', async function (req, res, next) {
  * authenticated 'instructor' User whose ID matches the `instructorId`
  * of the Course corresponding to the Assignments `courseId` can update an Assignment.
  */
-router.patch('/:assignmentId', async function (req, res, next) {
+router.patch('/:assignmentId', requireAuthentication, async function (req, res, next) {
     const assignmentId = req.params.assignmentId
-    // var course = null
     try {
       /*
        * Update assignment without allowing client to update businessId or userId.
        */
-      const assignment = await Assignment.findByPk(assignmentId)
-      const courseIdFromAssignment = assignment.courseId
-
+      const assignment2 = await Assignment.findByPk(assignmentId)
+      const courseIdFromAssignment = assignment2.courseId
       const course = await Course.findByPk(courseIdFromAssignment, {
         attributes: {exclude: EXCLUDE_ATTRIBUTES_LIST},
         include: includeInstructorInResult()
       })
-      const instructorId = course.instructorId
-      console.log(instructorId)
 
-      if (req.userRole === "admin" || (req.userRole === "instructor" && req.userId === instructorId)) {
-        const result = await Assignment.update(req.body, {
-          where: { id: assignmentId },
-          fields: AssignmentClientFields.filter(
-            field => field !== 'coursesId' && field !== 'userId' && field !== 'submissionsId'
-          )
-        })
-        if (result[0] > 0) {
-          res.status(204).send()
+      if (course) {
+        const instructorId = course.dataValues.users[0].id
+        // console.log(instructorId)
+        if(!(req.userRole === "admin" || (req.userRole === "instructor" && req.userId === instructorId))) {
+          res.status(403).json({
+              error: "Unauthorized access to specified resource or Instructor is not allowed to modify Assignment."
+          })
         } else {
-          next()
+          const result = await Assignment.update(req.body, {
+            where: { id: assignmentId },
+            fields: AssignmentClientFields.filter(
+              field => field !== 'coursesId' && field !== 'userId' && field !== 'submissionsId'
+            )
+          })
+          if (result[0] > 0) {
+            res.status(204).send()
+          } else {
+            next()
+          }
         }
-      } else {
-        res.status(403).send({
-          err: "Unathorized access token."
-        })
       }
-      
+
     } catch (e) {
+      res.status(400).send({
+        err: "Course does not exist."
+      })
       next(e)
     }
 })
@@ -145,24 +160,39 @@ router.patch('/:assignmentId', async function (req, res, next) {
  * authenticated 'instructor' User whose ID matches the `instructorId`
  * of the Course corresponding to the Assignments `courseId` can delete an Assignment.
  */
-router.delete('/:assignmentId', async function (req, res, next) {
+router.delete('/:assignmentId', requireAuthentication, async function (req, res, next) {
     const assignmentId = req.params.assignmentId
     try {
-      const result = await Assignment.destroy({ where: { id: assignmentId }})
-      if (result > 0) {
-        res.status(204).send()
+      const assignment2 = await Assignment.findByPk(assignmentId)
+      const courseIdFromAssignment = assignment2.courseId
+      const course = await Course.findByPk(courseIdFromAssignment, {
+        attributes: {exclude: EXCLUDE_ATTRIBUTES_LIST},
+        include: includeInstructorInResult()
+      })
+
+      if (course) {
+        const instructorId = course.dataValues.users[0].id
+        // console.log(instructorId)
+        if(!(req.userRole === "admin" || (req.userRole === "instructor" && req.userId === instructorId))) {
+          res.status(403).json({
+              error: "Unauthorized access to specified resource or Instructor is not allowed to delete Assignment."
+          })
+        } else {
+          const result = await Assignment.destroy({ where: { id: assignmentId }})
+          if (result > 0) {
+            res.status(204).send()
+          } else {
+            next()
+          }
+        }
       } else {
-        next()
+        res.status(400).send({
+          err: "Unauthorized access to resource."
+        })
       }
     } catch (e) {
       next(e)
     }
-    if(!(req.user.role === "admin" || (req.user.role === "instructor" && req.userId === match.dataValues.user[0].id))){
-      res.status(403).json({
-          error: "Unauthorized access to specified resource"
-      })
-      return
-  }
 })
 
 // Get all submissions for an assignment, paginated, authenticated via instructorId
@@ -177,7 +207,23 @@ router.get('/:assignmentId/submissions', requireAuthentication, async function (
   const submissionsPerPage = 10
   const assignmentId = req.params.assignmentId
 
-  var page = parseInt(req.query.page) || 1
+  const assignment2 = await Assignment.findByPk(assignmentId)
+  const courseIdFromAssignment = assignment2.courseId
+  const course = await Course.findByPk(courseIdFromAssignment, {
+    attributes: {exclude: EXCLUDE_ATTRIBUTES_LIST},
+    include: includeInstructorInResult()
+  })
+
+  if (course) {
+    const instructorId = course.dataValues.users[0].id
+    // console.log(instructorId)
+    // console.log(req.userId)
+    if(!(req.userRole === "admin" || (req.userRole === "instructor" && req.userId === instructorId))) {
+      res.status(403).json({
+          error: "Unauthorized access to specified resource or Instructor is not allowed to fetch Assignment."
+      })
+    } else {
+      var page = parseInt(req.query.page) || 1
   page = page < 1 ? 1 : page
   var offset = (page - 1) * submissionsPerPage
 
@@ -214,6 +260,12 @@ router.get('/:assignmentId/submissions', requireAuthentication, async function (
     )
   })
 
+    }
+  } else {
+    res.status(400).send({
+      err: "Unauthorized access to resource."
+    })
+  }
 })
 
 // Post a new submission to an assignment, adds data to database, only student with role in courseId can submit
@@ -226,6 +278,7 @@ router.get('/:assignmentId/submissions', requireAuthentication, async function (
 router.post('/:assignmentId/submissions', requireAuthentication, upload.single('file'), async function (req, res, next) {
   console.log("  -- req.file:", req.file)
   console.log("  -- req.body:", req.body)
+
   if (req.file &&
     req.params.assignmentId &&
     req.body.studentId &&
@@ -233,18 +286,24 @@ router.post('/:assignmentId/submissions', requireAuthentication, upload.single('
     req.body.grade &&
     req.file.filename) {
     try {
-      var submissionBody = {
-        assignmentId: req.params.assignmentId,
-        studentId: req.body.studentId,
-        dueDate: req.body.dueDate,
-        grade: req.body.grade,
-        fileName: req.file.filename
+      if (req.userRole == "student" && req.userId == req.body.studentId) {
+        var submissionBody = {
+          assignmentId: req.params.assignmentId,
+          studentId: req.body.studentId,
+          dueDate: req.body.dueDate,
+          grade: req.body.grade,
+          fileName: req.file.filename
+        }
+        const newSubmission = await Submission.create(submissionBody, SubmissionsClientFields)
+        res.status(201).json({
+          id: newSubmission.id
+        })
+      } else {
+        res.status(403).send({
+          err: "Unauthorized to access resource."
+        })
       }
 
-      const newSubmission = await Submission.create(submissionBody, SubmissionsClientFields)
-      res.status(201).json({
-        id: newSubmission.id
-      })
     } catch (e) {
       next(e)
     }

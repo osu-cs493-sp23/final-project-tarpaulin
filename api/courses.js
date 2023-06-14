@@ -274,7 +274,7 @@ router.delete('/:courseId', requireAuthentication, async function (req, res, nex
         })
         return
     }
-    
+
     try {
       const result = await Course.destroy({ where: { id: courseId }})
       if (result > 0) {
@@ -283,7 +283,6 @@ router.delete('/:courseId', requireAuthentication, async function (req, res, nex
         res.status(404).json({
             error: "Specified Course `id` not found."
         })
-        // console.log("No such course found")
         next()
       }
     } catch (e) {
@@ -350,8 +349,7 @@ router.get('/:courseId/students', requireAuthentication, async function (req, re
  * authenticated 'instructor' User whose ID matches the `instructorId`
  * of the Course can update the students enrolled in the Course.
  */
-router.post('/:courseId/students', async function (req, res, next){
-    
+router.post('/:courseId/students', requireAuthentication, async function (req, res, next){
     var addList = []
     var removeList = []
     if(!(req.body && (req.body.add || req.body.remove))){
@@ -381,13 +379,10 @@ router.post('/:courseId/students', async function (req, res, next){
         return
     }
 
-
     if(!course){
         next()
         return
     }
-
-
 
     if (!(req.userRole === "admin" || (req.userRole === "instructor" && req.user.id === course.dataValues.users[0].id))){
 		res.status(403).json({
@@ -395,7 +390,7 @@ router.post('/:courseId/students', async function (req, res, next){
 		})
 		return
 	}
-    
+
     var response = {}
     var addFailed = []
     var removeFailed = []
@@ -495,7 +490,6 @@ router.get('/:courseId/roster', requireAuthentication, async function (req, res,
 		return
 	}
 
-
 	if (!(req.userRole === "admin" || (req.userRole === "instructor" && req.user.id === course.dataValues.users[0].id))){
 		res.status(403).json({
 			error: "Request was not made by an authenticated User."
@@ -504,7 +498,6 @@ router.get('/:courseId/roster', requireAuthentication, async function (req, res,
 	}
 
 	const courseRosterObj = await getCourseStudentsList(courseId)
-    
 
 	if (courseRosterObj.status !== 200){
 		var errStr = undefined
@@ -521,7 +514,7 @@ router.get('/:courseId/roster', requireAuthentication, async function (req, res,
 	} catch (err){
 		next(err)
 	}
-	
+
 	//convert csv buffer to stream and send to user
 	Readable.from(csv).pipe(res.status(200).contentType("text/csv"))
 })
@@ -577,8 +570,7 @@ async function getCourseStudentsList(courseId){
 		data: [],
 		status: 200
 	}
-	
-    
+
 	//check first if the requested course exists
 	try {
 		if (!courseExists(courseId)){
