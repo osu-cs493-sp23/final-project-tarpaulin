@@ -347,7 +347,7 @@ router.get('/:courseId/roster', requireAuthentication, async function (req, res,
 	}
 
 
-	if (!(req.user.role === "admin" || (req.user.role === "instructor" && req.user.id === course.dataValues.users[0].id))){
+	if (!(req.userRole === "admin" || (req.userRole === "instructor" && req.user.id === course.dataValues.users[0].id))){
 		res.status(403).json({
 			error: "Request was not made by an authenticated User."
 		})

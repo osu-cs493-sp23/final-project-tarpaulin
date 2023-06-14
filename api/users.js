@@ -9,7 +9,7 @@ const { generateAuthToken, requireAuthentication, getRole } = require("../lib/au
 const { validateAgainstSchema } = require('../lib/validation')
 
 
-EXCLUDE_ATTRIBUTES_LIST = ["createdAt", "updatedAt"]
+EXCLUDE_ATTRIBUTES_LIST = ["createdAt", "updatedAt", "password","role"]
 
 // Create the first admin, debug only
 router.post('/createAdmin', async function(req, res, next){
@@ -72,17 +72,18 @@ router.post('/login', async function (req, res, next) {
             req.body.email,
             req.body.password
         )
-        if (authenticated) {
-            const token = generateAuthToken(user)
-            res.status(200).send({
-                token: token
-            })
+          if (authenticated) {
+              const token = generateAuthToken(user)
+              res.status(200).send({
+                  token: token
+              })
+          }
         } else {
             res.status(401).send({
                 error: "Invalid authentication credentials."
             })
-          }
         }
+        
           
       } catch (e) {
           next(e)
@@ -152,19 +153,26 @@ router.post('/login', async function (req, res, next) {
  * Code 403: Request was not made by an authenticated User.
  * Code 404: Specified Course `id` not found.
  */
-router.get('/:userId', async function (req, res, next) {
+router.get('/:userId', requireAuthentication ,async function (req, res, next) {
     const userId = parseInt(req.params.userId)
+
+    if (!(req.userRole === "admin") && userId !== req.userId){
+      res.status(403).json({
+        error: "Request was not made by an authenticated User."
+      })
+      return
+    }
 
     try {
       const user = await User.findByPk(userId)
       if (user) {
-        coursesList = getUserCourses(user, userId)
-        console.log(coursesList)
+        coursesList = await getUserCourses(user, userId)
+        console.log(coursesList.data[0])
         res.status(200).send({
           username: user.name,
           email: user.email,
           role: user.role,
-          courses: coursesList
+          courses: coursesList.data
         })
       } else {
         console.log("User does not exist")
@@ -211,14 +219,16 @@ async function getUserCourses(user, userId){                // findall parameter
 
 
 	courses.forEach(course => {
+    const { id, number, subject, title, term} = course.dataValues
 		courseList.data.push({
-			...course.dataValues,
-			students: undefined
+      id,
+      number,
+      subject,
+      title,
+      term
 		})
 	})
 	courseList.status = 200
-
-  console.log(courseList)
 
   return courseList
 }
