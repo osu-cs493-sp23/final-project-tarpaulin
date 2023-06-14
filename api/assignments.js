@@ -43,7 +43,7 @@ const upload = multer({
  * 'instructor' User whose ID matches the `instructorId` of the Course 
  * corresponding to the Assignment's `courseId` can create an Assignment.
  */
-router.post('/', upload.single("file"), requireAuthentication, async function (req, res, next) {
+router.post('/', requireAuthentication, upload.single("file"), async function (req, res, next) {
   if(req.file && req.body.title && req.body.points && req.body.dueDate){
     // const pdf = {
     //   contentType: req.file.mimetype,
@@ -68,8 +68,9 @@ router.post('/', upload.single("file"), requireAuthentication, async function (r
       // console.log(instructorId)
 
       if(!(req.userRole === "admin" || (req.userRole === "instructor" && req.userId === instructorId))){
+        await fs.unlink(req.file.path)
         res.status(403).json({
-            error: "Unauthorized access to specified resource"
+            error: "Unauthorized access to create resource."
         })
       } else {
         res.status(201).send({ id: assignment.id })
@@ -77,13 +78,16 @@ router.post('/', upload.single("file"), requireAuthentication, async function (r
 
     } catch (e) {
       if (e instanceof ValidationError) {
+        await fs.unlink(req.file.path)
         res.status(400).send({ error: e.message })
       } else {
+        await fs.unlink(req.file.path)
         next(e)
       }
     }
 
   } else{
+    await fs.unlink(req.file.path)
     res.status(400).send({
       err: "Invalid file"
     })
@@ -144,6 +148,10 @@ router.patch('/:assignmentId', requireAuthentication, async function (req, res, 
             next()
           }
         }
+      } else {
+        res.status(400).send({
+          err: "Instructor ID does not match Assignment 'courseId'."
+        })
       }
 
     } catch (e) {
@@ -299,15 +307,18 @@ router.post('/:assignmentId/submissions', requireAuthentication, upload.single('
           id: newSubmission.id
         })
       } else {
+        await fs.unlink(req.file.path)
         res.status(403).send({
-          err: "Unauthorized to access resource."
+          err: "Unauthorized to access resource. User not verified."
         })
       }
 
     } catch (e) {
+      await fs.unlink(req.file.path)
       next(e)
     }
   } else {
+    await fs.unlink(req.file.path)
     res.status(400).send({
         err: "Invalid file"
     })
