@@ -155,6 +155,7 @@ router.post('/login', async function (req, res, next) {
  */
 router.get('/:userId', requireAuthentication ,async function (req, res, next) {
     const userId = parseInt(req.params.userId)
+    console.log(userId)
 
     if (!(req.userRole === "admin") && userId !== req.userId){
       res.status(403).json({
@@ -174,10 +175,8 @@ router.get('/:userId', requireAuthentication ,async function (req, res, next) {
           role: user.role,
           courses: coursesList.data
         })
-      } else {
-        console.log("User does not exist")
-        next()
       }
+      
     } catch (e) {
       next(e)
     }
@@ -232,40 +231,5 @@ async function getUserCourses(user, userId){                // findall parameter
 
   return courseList
 }
-
-
-//////////// TESTING ///////////////
-
-// router.get("/:userId", requireAuthentication, authLimiter, (req, res, next) => {
-//   const userId = req.params.userId
-
-//   try {
-//     console.log(req.userRole)
-
-//     if (req.userRole == "admin" || req.params.userId == req.userId) {
-//       const user = User.findByPk(userId)
-//       user.then(function(result) {
-//         res.status(200).send(result)
-//       })
-//     } else {
-//       res.status(404).send({
-//         error: "Cannot access resource."
-//       })
-//     }
-//   } catch (e) {
-//     next(e)
-//   }
-// })
-
-// router.use(limiter)
-
-
-
-
-/////////////////////////////
-
-
-
-
 
 module.exports = router
