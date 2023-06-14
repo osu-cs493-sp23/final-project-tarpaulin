@@ -11,7 +11,7 @@ const fields = {
     number: { type: DataTypes.STRING, allowNull: false, unique: false },
     subject: { type: DataTypes.STRING, allowNull: false, unique: false },
     title: { type: DataTypes.STRING, allowNull: false, unique: false },
-    term: { type: DataTypes.STRING, allowNull: false, unique: false}
+    term: { type: DataTypes.STRING, allowNull: false, unique: false},
     // instructorId: { type: DataTypes.INTEGER, allowNull: false}
 }
 

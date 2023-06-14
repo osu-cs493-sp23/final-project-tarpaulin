@@ -3,8 +3,14 @@ const { ValidationError } = require('sequelize')
 
 const { Assignment, AssignmentClientFields } = require('../models/assignment')
 const { Submission, SubmissionsClientFields } = require('../models/submission')
+const { Course } = require('../models/course')
+const { User } = require("../models/user")
+// const { includeInstructorInResult } = require("../api/courses")
 const { requireAuthentication } = require('../lib/auth')
 const { generateHATEOASlinks, getOnly} = require("../lib/pagination.js")
+
+const EXCLUDE_ATTRIBUTES_LIST = ["createdAt", "updatedAt"]
+const EXCLUDE_USER_ATTRIBUTES_LIST = EXCLUDE_ATTRIBUTES_LIST.concat(["password"])
 
 const router = Router()
 
@@ -14,6 +20,7 @@ const subTypes = {
 const multer = require('multer')
 const crypto = require('node:crypto')
 const fs = require("node:fs/promises")
+const { containsAtLeastOneSchemaField } = require('../lib/validation')
 
 const upload = multer({
   storage: multer.diskStorage({
@@ -50,7 +57,7 @@ router.post('/', upload.single("file"), requireAuthentication, async function (r
       //   id: id
       // })
       const assignment = await Assignment.create(req.body, AssignmentClientFields)
-      res.status(201).send({ id: assignment.id })
+      res.status(201).send({ id: assignment.id, test: testResult.id })
     } catch (e) {
       if (e instanceof ValidationError) {
         res.status(400).send({ error: e.message })
@@ -58,6 +65,12 @@ router.post('/', upload.single("file"), requireAuthentication, async function (r
         next(e)
       }
     }
+    if(!(req.user.role === "admin" || (req.user.role === "instructor" && req.userId === match.dataValues.user[0].id))){
+      res.status(403).json({
+          error: "Unauthorized access to specified resource"
+      })
+      return
+  }
   } else{
     res.status(400).send({
       err: "Invalid file"
@@ -88,21 +101,39 @@ router.get('/:assignmentId', async function (req, res, next) {
  */
 router.patch('/:assignmentId', async function (req, res, next) {
     const assignmentId = req.params.assignmentId
+    // var course = null
     try {
       /*
        * Update assignment without allowing client to update businessId or userId.
        */
-      const result = await Assignment.update(req.body, {
-        where: { id: assignmentId },
-        fields: AssignmentClientFields.filter(
-          field => field !== 'coursesId' && field !== 'userId' && field !== 'submissionsId'
-        )
+      const assignment = await Assignment.findByPk(assignmentId)
+      const courseIdFromAssignment = assignment.courseId
+
+      const course = await Course.findByPk(courseIdFromAssignment, {
+        attributes: {exclude: EXCLUDE_ATTRIBUTES_LIST},
+        include: includeInstructorInResult()
       })
-      if (result[0] > 0) {
-        res.status(204).send()
+      const instructorId = course.instructorId
+      console.log(instructorId)
+
+      if (req.userRole === "admin" || (req.userRole === "instructor" && req.userId === instructorId)) {
+        const result = await Assignment.update(req.body, {
+          where: { id: assignmentId },
+          fields: AssignmentClientFields.filter(
+            field => field !== 'coursesId' && field !== 'userId' && field !== 'submissionsId'
+          )
+        })
+        if (result[0] > 0) {
+          res.status(204).send()
+        } else {
+          next()
+        }
       } else {
-        next()
+        res.status(403).send({
+          err: "Unathorized access token."
+        })
       }
+      
     } catch (e) {
       next(e)
     }
@@ -126,6 +157,12 @@ router.delete('/:assignmentId', async function (req, res, next) {
     } catch (e) {
       next(e)
     }
+    if(!(req.user.role === "admin" || (req.user.role === "instructor" && req.userId === match.dataValues.user[0].id))){
+      res.status(403).json({
+          error: "Unauthorized access to specified resource"
+      })
+      return
+  }
 })
 
 // Get all submissions for an assignment, paginated, authenticated via instructorId
@@ -176,6 +213,7 @@ router.get('/:assignmentId/submissions', requireAuthentication, async function (
       queryParams
     )
   })
+
 })
 
 // Post a new submission to an assignment, adds data to database, only student with role in courseId can submit
@@ -213,10 +251,25 @@ router.post('/:assignmentId/submissions', requireAuthentication, upload.single('
   } else {
     res.status(400).send({
         err: "Invalid file"
-    })      
+    })
   }
 })
 
 
+// Helper Functions
+
+function includeInstructorInResult(exclude){
+	var excludeList = EXCLUDE_USER_ATTRIBUTES_LIST
+	if (exclude)
+		excludeList.concat(exclude)
+
+	return {
+		model: User,
+		as: "users",
+		where: {role: "instructor"},
+		through: {attributes: []},
+		attributes: {exclude: excludeList}
+	}
+}
 
 module.exports = router

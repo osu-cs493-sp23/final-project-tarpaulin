@@ -104,8 +104,8 @@ router.post('/', requireAuthentication, async function (req, res, next) {
     }
     res.status(201).json({id: course.id})  
 
-})    
-    
+})
+
 
 
 // Get an course by ID
@@ -294,47 +294,125 @@ router.get('/:courseId/students', requireAuthentication, async function (req, re
  * authenticated 'instructor' User whose ID matches the `instructorId`
  * of the Course can update the students enrolled in the Course.
  */
-router.post('/:courseId/students', requireAuthentication, async function (req, res, next){
-    const course = await Course.findByPk(req.params.courseId)
-    console.log(" -- course: ", course)
-
-    const userIds = req.body.userId
-    console.log(" -- userIds: ", userIds)
-    for (var i = 0; i < userIds.length; i++) {
-        const user = await User.findByPk(userIds[i])
-        console.log(" -- user: ", user)
+router.post('/:courseId/students', async function (req, res, next){
     
-        if (course && user) {
-            const UserCourseBody = {
-                courseId: course.id,
-                userId: user.id
-            }
+    var addList = []
+    var removeList = []
+    if(!(req.body && (req.body.add || req.body.remove))){
+        res.status(400).json({
+            error: "Invalid request body or no valid studentIds for specified course"
+        })
+        return
+    } 
+    if (req.body.add){
+        addList = req.body.add
+    } 
+    if (req.body.remove){
+        removeList = req.body.remove
+    }
 
-            const { count } = await UserCourse.findAndCountAll({
-                    where: {
-                        courseId: course.id,
-                        userId: user.id
-                        },
-                })
-            console.log(" -- dupCount: ", count)
-            if (count != 0) {
-                res.status(400).send({
-                    err: "UserCourse relationship allready exists"
-                })
-                return                    
-            } else {
-                console.log(" -- UserCourseBody: ", UserCourseBody)
-                const newUserCurse = await UserCourse.create(UserCourseBody)                        
-            }         
-        } else {
-            res.status(404).send({
-                err: "course/user not found"
-            })
-            return
+    const courseId = parseInt(req.params.courseId) || 0
+
+    var course = null
+    try{
+        // course = await Course.findByPk(courseId, {
+        //     attributes: {exclude: EXCLUDE_ATTRIBUTES_LIST},
+        //     include: includeInstructorInResult()
+        // })
+        course = await Course.findByPk(courseId)
+    } catch (err){
+        next(err)
+        return
+    }
+
+
+    if(!course){
+        next()
+        return
+    }
+
+
+
+    if (!(req.userRole === "admin" || (req.userRole === "instructor" && req.user.id === course.dataValues.users[0].id))){
+		res.status(403).json({
+			error: "Unauthorized access to specified resource."
+		})
+		return
+	}
+    
+    var response = {}
+    var addFailed = []
+    var removeFailed = []
+    console.log(addList)
+    if(addList.length > 0){
+        addList.forEach(async studentId => {
+            try{
+                await course.addUser(studentId)
+            } catch (err){
+                addFailed.push(studentId)
+            }
+        })
+        if(addFailed.length > 0){
+            response["not_added"] = addFailed
         }
     }
-    res.status(201).send("Linked User to Course")
+
+    if(removeList.length > 0){
+        removeList.forEach(async studentId=> {
+            try{
+                await course.removeUser(studentId)
+            } catch (err){
+                removeFailed.push(studentId)
+            }
+        })
+        if(removeFailed.length > 0){
+            response["not_removed"] = removeFailed
+        }
+    }
+    res.status(201).json(response)
 })
+
+// router.post('/:courseId/students', requireAuthentication, async function (req, res, next){
+//     const course = await Course.findByPk(req.params.courseId)
+//     console.log(" -- course: ", course)
+
+//     const userIds = req.body.userId
+//     console.log(" -- userIds: ", userIds)
+//     for (var i = 0; i < userIds.length; i++) {
+//         const user = await User.findByPk(userIds[i])
+//         console.log(" -- user: ", user)
+    
+//         if (course && user) {
+//             const UserCourseBody = {
+//                 courseId: course.id,
+//                 userId: user.id
+//             }
+
+//             const { count } = await UserCourse.findAndCountAll({
+//                     where: {
+//                         courseId: course.id,
+//                         userId: user.id
+//                         },
+//                 })
+//             console.log(" -- dupCount: ", count)
+//             if (count != 0) {
+//                 res.status(400).send({
+//                     err: "UserCourse relationship allready exists"
+//                 })
+//                 return                    
+//             } else {
+//                 console.log(" -- UserCourseBody: ", UserCourseBody)
+//                 const newUserCurse = await UserCourse.create(UserCourseBody)                        
+//             }         
+//         } else {
+//             res.status(404).send({
+//                 err: "course/user not found"
+//             })
+//             return
+//         }
+//     }
+//     res.status(201).send("Linked User to Course")
+// })
 
 
 // Unique ID of a Course, fetch a CSV file containing list of students enrolled in the course
@@ -362,7 +440,7 @@ router.get('/:courseId/roster', requireAuthentication, async function (req, res,
 	}
 
 
-	if (!(req.user.role === "admin" || (req.user.role === "instructor" && req.user.id === course.dataValues.users[0].id))){
+	if (!(req.userRole === "admin" || (req.userRole === "instructor" && req.user.id === course.dataValues.users[0].id))){
 		res.status(403).json({
 			error: "Request was not made by an authenticated User."
 		})

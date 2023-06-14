@@ -4,35 +4,35 @@
         "studentId": 3,
         "dueDate": "4/23/23",
         "grade": 89.2,
-        "path": "test path"
+        "fileName": "test fileName"
     },
     {
         "assignmentId": 2,
         "studentId": 3,
         "dueDate": "4/23/23",
         "grade": 89.2,
-        "path": "test path"
+        "fileName": "test fileName"
     },
     {
         "assignmentId": 3,
         "studentId": 3,
         "dueDate": "4/23/23",
         "grade": 89.2,
-        "path": "test path"
+        "fileName": "test fileName"
     },
     {
         "assignmentId": 4,
         "studentId": 3,
         "dueDate": "4/23/23",
         "grade": 89.2,
-        "path": "test path"
+        "fileName": "test fileName"
     },
     {
         "assignmentId": 5,
         "studentId": 3,
         "dueDate": "4/23/23",
         "grade": 89.2,
-        "path": "test path"
+        "fileName": "test fileName"
     }
 
 ]
