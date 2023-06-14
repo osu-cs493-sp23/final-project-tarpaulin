@@ -29,42 +29,98 @@ const router = Router()
 
 // Get all courses
 router.get("/", async function (req, res, next){
-    const coursesPerPage = 10
+    const pageSize = 5
+    
+    subject = req.body.subject
+    number = req.body.number
+    term = req.body.term
 
-    var page = parseInt(req.query.page) || 1
+    let page = parseInt(req.query.page) || 1
     page = page < 1 ? 1 : page
-    var offset = (page -1) * coursesPerPage
+    var offset = (page - 1) * pageSize
 
-    var queryParams = getOnly(req.query, ["subject", "number", "term"])
-    var result = null
-    try {
-        result = await Course.findAndCountAll({
-            where: queryParams,
-            limit: coursesPerPage,
-            offset: offset,
-            attributes: {},
-            include: includeInstructorInResult()
-        })
-    } catch (err){
-        next(err)
-        return
-    }
-    resultsPage = []
-    result.rows.forEach((course) => {
-        resultsPage.push(courseFromSeq(course))
-    })
+    const whereCondition ={}
+    if (subject) whereCondition.subject = subject
+    if (number) whereCondition.number = number
+    if(term) whereCondition.term = term
 
-    var lastPage = Math.ceil(result.count / coursesPerPage)
-    res.status(200).json({
-        courses: resultsPage,
-        links: generateHATEOASlinks(
-            req.originalUrl.split("?")[0],
-            page,
-            lastPage,
-            queryParams
-        )
-    })
+
+    const { count, rows } = await Course.findAndCountAll({
+        where: whereCondition,
+        limit: pageSize,
+        offset: offset,
+        include: includeInstructorInResult()
+      });
+    
+      const totalPages = Math.ceil(count / pageSize);
+    
+      res.status(200).send({
+        courses: rows,
+        currentPage: page,
+        totalPages: totalPages,
+      });
+
+
+
+    // console.log(pageSize)
+    // const courses = await Course.findAll({
+    //     where: whereCondition,
+    //     limit: pageSize,
+    //     order: [['id', 'ASC']],
+    //     offset: offset,
+    // })
+
+    // const totalCount = await Course.count({
+    //     where: whereCondition,
+    // })
+
+    // const totalPages = Math.ceil(totalCount / pageSize)
+    // res.status(200).send({
+    //     courses: courses,
+    //     currentPage: page,
+    //     totalPages: totalPages || 0
+    // })
 })
+
+// router.get("/", async function (req, res, next){
+//     const coursesPerPage = 10
+
+//     let page = parseInt(req.query.page) || 1
+//     // page = page < 1 ? 1 : page
+//     page = Math.max(1,page)
+//     var offset = (page -1) * coursesPerPage
+
+//     var queryParams = getOnly(req.query, ["subject", "number", "term"])
+//     var result = null
+//     try {
+//         result = await Course.findAndCountAll({
+//             where: queryParams,
+//             limit: coursesPerPage,
+//             offset: offset,
+//             attributes: {},
+//             include: includeInstructorInResult()
+//         })
+//         console.log(result)
+//     } catch (err){
+//         next(err)
+//         return
+//     }
+//     resultsPage = []
+//     result.rows.forEach((course) => {
+//         resultsPage.push(courseFromSeq(course))
+//     })
+
+//     var lastPage = Math.ceil(result.count / coursesPerPage)
+//     res.status(200).json({
+//         courses: resultsPage,
+//         links: generateHATEOASlinks(
+//             req.originalUrl.split("?")[0],
+//             page,
+//             lastPage,
+//             queryParams
+//         )
+//     })
+// })
 
 
 // Post a new course
