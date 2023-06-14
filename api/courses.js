@@ -30,7 +30,7 @@ const router = Router()
 // Get all courses
 router.get("/", async function (req, res, next){
     const pageSize = 5
-    
+
     subject = req.body.subject
     number = req.body.number
     term = req.body.term
@@ -51,9 +51,9 @@ router.get("/", async function (req, res, next){
         offset: offset,
         include: includeInstructorInResult()
       });
-    
+
       const totalPages = Math.ceil(count / pageSize);
-    
+
       res.status(200).send({
         courses: rows,
         currentPage: page,
@@ -128,13 +128,6 @@ router.get("/", async function (req, res, next){
  *  Only an authenticated User with 'admin' role can create a new Course.
  */
 router.post('/', requireAuthentication, async function (req, res, next) {
-    if (!(req.userRole === "admin")){
-		res.status(403).json({
-			error: "Unauthorized access to specified resource."
-		})
-		return
-	}
-
     var newCourse = req.body
     if(!validateAgainstSchema(newCourse, courseSchema)){
         res.status(400).json({
@@ -146,19 +139,29 @@ router.post('/', requireAuthentication, async function (req, res, next) {
     console.log("Validation of schema successful")
     var course = {}
     try {
+        if (!(req.userRole === "admin")){
+            res.status(403).json({
+                error: "Unauthorized access to specified resource."
+            })
+        }
         course = await Course.create(newCourse, courseClientFields)
         await course.addUser(newCourse.instructorId)
+
     } catch (err){
         if (err instanceof ValidationError){
             res.status(400).json({
                 error: "The course conflicts with an existing course."
             })
         } else {
+            res.status(400).send({
+                err: "Instructor ID does not exist. Course still created."
+            })
             next(err)
         }
         return
     }
-    res.status(201).json({id: course.id})  
+
+    res.status(201).json({id: course.id})
 
 })
 
@@ -219,11 +222,19 @@ router.patch('/:courseId', requireAuthentication, async function (req, res, next
         next()
         return
     }
-    if(!(req.user.role === "admin" || (req.user.role === "instructor" && req.userId === match.dataValues.user[0].id))){
-        res.status(403).json({
-            error: "Unauthorized access to specified resource"
-        })
-        return
+    const course2 = await Course.findByPk(courseId, {
+        attributes: {exclude: EXCLUDE_ATTRIBUTES_LIST},
+        include: includeInstructorInResult()
+    })
+    if (course2) {
+        if(!(req.userRole === "admin" || (req.userRole === "instructor" && req.userId === course2.dataValues.users[0].id))){
+            res.status(403).json({
+                error: "Unauthorized access to specified resource"
+            })
+            return
+        }
+    } else {
+        next()
     }
 
     var isUpdated = false
@@ -317,11 +328,19 @@ router.get('/:courseId/students', requireAuthentication, async function (req, re
         return
     }
 
-    if(!(req.userRole === "admin" || (req.userRole === "instructor" && req.user.id === course.dataValues.users[0].id))){
-        res.status(403).json({
-            error: "Unauthorized access to specified resource"
-        })
-        return
+    const course2 = await Course.findByPk(courseId, {
+        attributes: {exclude: EXCLUDE_ATTRIBUTES_LIST},
+        include: includeInstructorInResult()
+    })
+    if (course2) {
+        if(!(req.userRole === "admin" || (req.userRole === "instructor" && req.userId === course2.dataValues.users[0].id))){
+            res.status(403).json({
+                error: "Unauthorized access to specified resource."
+            })
+            return
+        }
+    } else {
+        next()
     }
 
     const courseRoster = await getCourseStudentsList(courseId)
@@ -384,12 +403,20 @@ router.post('/:courseId/students', requireAuthentication, async function (req, r
         return
     }
 
-    if (!(req.userRole === "admin" || (req.userRole === "instructor" && req.user.id === course.dataValues.users[0].id))){
-		res.status(403).json({
-			error: "Unauthorized access to specified resource."
-		})
-		return
-	}
+    const course2 = await Course.findByPk(courseId, {
+        attributes: {exclude: EXCLUDE_ATTRIBUTES_LIST},
+        include: includeInstructorInResult()
+    })
+    if (course2) {
+        if(!(req.userRole === "admin" || (req.userRole === "instructor" && req.userId === course2.dataValues.users[0].id))){
+            res.status(403).json({
+                error: "Unauthorized access to specified resource."
+            })
+            return
+        }
+    } else {
+        next()
+    }
 
     var response = {}
     var addFailed = []
@@ -490,12 +517,20 @@ router.get('/:courseId/roster', requireAuthentication, async function (req, res,
 		return
 	}
 
-	if (!(req.userRole === "admin" || (req.userRole === "instructor" && req.user.id === course.dataValues.users[0].id))){
-		res.status(403).json({
-			error: "Request was not made by an authenticated User."
-		})
-		return
-	}
+	const course2 = await Course.findByPk(courseId, {
+        attributes: {exclude: EXCLUDE_ATTRIBUTES_LIST},
+        include: includeInstructorInResult()
+    })
+    if (course2) {
+        if(!(req.userRole === "admin" || (req.userRole === "instructor" && req.userId === course2.dataValues.users[0].id))){
+            res.status(403).json({
+                error: "Unauthorized access to specified resource."
+            })
+            return
+        }
+    } else {
+        next()
+    }
 
 	const courseRosterObj = await getCourseStudentsList(courseId)
 
